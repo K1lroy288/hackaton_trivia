@@ -27,3 +27,17 @@ class UserRepository:
                 return db_user
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error of repository login of user {user.id}: {e}')
+    
+    def register(self, user: User):
+        try:
+            with Session(self.engine) as session:
+                db_user = session.get(user.username)
+                if db_user:
+                    raise Exception('User with such username is already exist')
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                return user
+        except Exception as e:
+            print(e)
+                    
