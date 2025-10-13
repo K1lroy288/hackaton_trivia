@@ -77,3 +77,23 @@ class Room(Base):
     
     def __repr__(self) -> str:
         return f'Room(id={self.id!r}, roomname={self.name!r}, participants={self.participants!r}, created_at={self.created_at!r}, is_running={self.is_running}, password={self.password})'
+    
+class Question(Base):
+    __tablename__ = 'questions'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    text: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    correct_answer: Mapped[str] = mapped_column(String, nullable=False)
+    options: Mapped[str] = mapped_column(String, nullable=False)
+    category: Mapped[str] = mapped_column(String, nullable=True)
+    difficulty: Mapped[str] = mapped_column(String, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'text': self.text,
+            'correct_answer': self.correct_answer,
+            'options': self.options,
+            'category': self.category,
+            'difficulty': self.difficulty,
+        }

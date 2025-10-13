@@ -139,3 +139,15 @@ class RoomRepository:
                     session.commit()
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error removing participant {user_id} from room {room_id}: {e}')
+    
+    """ 
+        эта функция принимает имя комнаты и пароль
+        возвращает пароль если он есть иначе None
+        это не апи функция, ты вызываешь ее при добавлении пользователя в комнату
+        проверяешь пароль
+    """
+    def verify_room_password(self, roomname: str, password: str):
+        room = self.findByRoomname(roomname)
+        if not room.password:
+            return password is None
+        return password
