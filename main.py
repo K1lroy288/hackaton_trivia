@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.config import Settings
 
 app = FastAPI(title="Hackaton Trivia API")
-
+settings = Settings()
 # CORS — должен быть до подключения роутеров
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +38,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"error": "Internal Server Error", "details": str(exc)}
     )
 
+
 # Запуск через `python main.py`
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host = Settings.SERVER_HOST, port = Settings.SERVER_PORT, reload = True)
+    uvicorn.run("main:app", host = settings.SERVER_HOST, port = 3425, reload = True)
