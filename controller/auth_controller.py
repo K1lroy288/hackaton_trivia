@@ -6,16 +6,12 @@ from model.Models import User
 router = APIRouter()
 auth_service = AuthenticationService()
 
-class RegisterRequest(BaseModel):
-    username: str
-    password: str
-
-class LoginRequest(BaseModel):
+class AuthRequest(BaseModel):
     username: str
     password: str
 
 @router.post("/api/v1/trivia/register", status_code=201)
-def controller_register(data: RegisterRequest):
+def controller_register(data: AuthRequest):
     try:
         user = User()
         user.username = data.username
@@ -28,7 +24,7 @@ def controller_register(data: RegisterRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/api/v1/trivia/login")
-def controller_login(data: LoginRequest):
+def controller_login(data: AuthRequest):
     try:
         user = User()
         user.username = data.username
