@@ -2,12 +2,11 @@ from typing import Set
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, DateTime, Table, Column, ForeignKey, Boolean
 from datetime import datetime
-from enum import Enum as PyEnum  # ← переименуй для ясности
+from enum import Enum as PyEnum
 
 class Base(DeclarativeBase):
     pass
 
-# Ассоциативные таблицы
 user_role_table = Table(
     'user_role',
     Base.metadata,
@@ -22,7 +21,6 @@ room_participants = Table(
     Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
 )
 
-# Enum как строка
 class Role(PyEnum):
     USER = "USER"
 
@@ -38,9 +36,6 @@ class User(Base):
         nullable=False,
     )
     
-    # УДАЛИ ПОЛЕ roles полностью
-    # roles: Mapped[Set[Role]] = relationship(...)  ← УДАЛИ ЭТО
-    
     rooms: Mapped[Set["Room"]] = relationship(
         secondary=room_participants,
         back_populates="participants",
@@ -51,14 +46,13 @@ class User(Base):
             "id": self.id,
             "username": self.username,
             "created_at": self.created_at.isoformat(),
-            # Роли будем добавлять отдельно, если нужно
         }
 
 class Room(Base):
     __tablename__ = 'rooms'
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    roomname: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=True)
     is_running: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -75,11 +69,11 @@ class Room(Base):
     def to_dict(self):
         return {
             'id': self.id,
-            'roomname': self.roomname,
+            'roomname': self.name,
             'is_running': self.is_running,
-            'created_at': self.created_at,
+            'created_at': self.created_at.isoformat(),
             'participants': [user.to_dict() for user in self.participants],
         }
     
     def __repr__(self) -> str:
-        return f'Room(id={self.id!r}, roomname={self.roomname!r}, participants={self.participants!r}, created_at={self.created_at!r}, is_running={self.is_running}, password={self.password})'
+        return f'Room(id={self.id!r}, roomname={self.name!r}, participants={self.participants!r}, created_at={self.created_at!r}, is_running={self.is_running}, password={self.password})'
