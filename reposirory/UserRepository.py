@@ -1,12 +1,9 @@
 from sqlalchemy import create_engine
-from sqlalchemy import create_engine
 from sqlalchemy import Engine
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from model.User import User
 from config.config import Settings
-from datetime import datetime
 
 class UserRepository:
     
@@ -36,8 +33,6 @@ class UserRepository:
                     raise Exception('User with such username is already exist')
                 session.add(user)
                 session.commit()
-                session.refresh(user)
-                return user
         except Exception as e:
             print(e)
                     

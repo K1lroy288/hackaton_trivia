@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy import Integer, String, DateTime, Table, Column, ForeignKey, Enum
 from datetime import datetime
+from Room import room_participants
 
 class Base(DeclarativeBase):
     pass
@@ -11,7 +12,7 @@ class Base(DeclarativeBase):
 user_role_table = Table(
     'user_role',
     Base.metadata,
-    Column('user_id', ForeignKey('user.id', ondelete='CASCADE'), primary_key=True),
+    Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
     Column('role', String, primary_key=True)
 )
 
@@ -24,17 +25,21 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default_factory=datetime.utcnow, nullable=False
+    )
+    
     roles: Mapped[Set[Role]] = relationship(
         secondary=user_role_table,
         collection_class=set,
         default_factory=set,
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default_factory=datetime.utcnow, nullable=False
-    )
     
-    def __init__(self):
-        pass
+    rooms: Mapped[Set['Room']] = relationship(
+        secondary=room_participants,
+        back_populates='participants',
+        default_factory=set,
+    )
     
     def to_dict(self):
         return{
