@@ -1,11 +1,10 @@
-
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify
 from model.User import User
 from service.service import AuthenticationService
 
 auth_service = AuthenticationService()
-app = Flask("Trivio")
+app = Flask("Trivia")
 """ Парсим json и отправляем структуру на сервис"""
 @app.route("/api/v1/trivia/register", methods = ['POST'])
 def controller_register():
