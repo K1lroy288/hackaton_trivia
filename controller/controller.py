@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify, render_template
 from model.Models import User, Role
-from service.service import AuthenticationService
+from service.service import AuthenticationService, RoomService
+from repository.RoomRepository import RoomRepository
 
 auth_service = AuthenticationService()
 app = Flask("Trivia")
@@ -39,3 +40,17 @@ def controller_login():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Error", "details": str(e)}), 500
+
+room_service = RoomService()
+
+@app.route("/api/v1/room", methods = ['GET'])
+def controller_get_all_rooms():
+    try:
+        rooms = room_service.get_all_rooms()
+        rooms_dict = []
+        for room in rooms:
+            rooms_dict.append(room.to_dict())
+        return jsonify(rooms_dict), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
