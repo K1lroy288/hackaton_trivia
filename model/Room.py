@@ -16,8 +16,6 @@ room_participants = Table(
     Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
 )
 
-
-
 class Room(Base):
     __tablename__ = 'rooms'
     

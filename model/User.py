@@ -5,6 +5,7 @@ from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy import Integer, String, DateTime, Table, Column, ForeignKey, Enum
 from datetime import datetime
 from Room import room_participants
+from Room import Room
 
 class Base(DeclarativeBase):
     pass
@@ -35,7 +36,7 @@ class User(Base):
         default_factory=set,
     )
     
-    rooms: Mapped[Set['Room']] = relationship(
+    rooms: Mapped[Set[Room]] = relationship(
         secondary=room_participants,
         back_populates='participants',
         default_factory=set,
