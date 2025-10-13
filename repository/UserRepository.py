@@ -25,7 +25,7 @@ class UserRepository:
                 result = session.execute(select(User).where(User.username == user.username))
                 db_user = result.scalar_one_or_none()
                 if not db_user:
-                    raise Exception('User with such username is already exist')
+                    raise Exception('User not found')
                 return db_user
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error of repository login of user {user.id}: {e}')

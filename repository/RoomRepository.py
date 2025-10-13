@@ -70,21 +70,21 @@ class RoomRepository:
         эта функция по добавлению участника в комнату
         принимает id комнаты и пользователя
         ничего не возвращает
-        /api/v1/room/{room_id}/{user_id} [PATCH]
-        body: пустое
+        /api/v1/room/{room_id}/{user_id}/join [PATCH]
+        body: username, user.id
     """
-    def addParticipant(self, room_id: int, user_id: int):
+    def addParticipant(self, room_id: int, user: User):
         try:
             with Session(self.engine) as session:
                 room = session.get(Room, room_id)
-                user = session.get(User, user_id)
+                user = session.get(User, user.id)
                 if not room or not user:
-                    raise ValueError(f'Room {room_id} or User {user_id} not found')
-                room.participants.add(user_id)
+                    raise ValueError(f'Room {room_id} or User {user.id} not found')
+                room.participants.add(user)
                 session.commit()
                 session.refresh(room)
         except SQLAlchemyError as e:
-            raise RuntimeError(f'Error of add partisipant {user_id} to room {room_id}: {e}')
+            raise RuntimeError(f'Error of add partisipant {user.id} to room {room_id}: {e}')
     
     """ 
         эта функция создает комнату
@@ -101,7 +101,7 @@ class RoomRepository:
                 if db_room:
                     raise ValueError('Room with such name is already exist')
                 session.add(room)
-                session.commit
+                session.commit()
                 session.refresh(room)
                 return room
         except SQLAlchemyError as e:
@@ -118,7 +118,7 @@ class RoomRepository:
         try:
             with Session(self.engine) as session:
                 stmt = select(Room).where(Room.name == roomname)
-                return Session.scalar(stmt)
+                return session.scalar(stmt)
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error fetching room by name "{roomname}": {e}')
     
@@ -133,7 +133,7 @@ class RoomRepository:
         try:
             with Session(self.engine) as session:
                 room = session.get(Room, room_id)
-                user = session.get(Room, room_id)
+                user = session.get(Room, user_id)
                 if room and user and user in room.participants:
                     room.participants.remove(user)
                     session.commit()
