@@ -2,7 +2,7 @@
 from datetime import datetime
 from flask import Flask, request, jsonify
 from model.User import User
-
+from service.service import AuthenticationService
 """@app.post(/api/v1/trivia/register)
 controller_register()
 jsonify
@@ -40,6 +40,12 @@ def controller_register():
         user.password = data['password']
         user.roles = data['roles']
         user.createdAt = datetime.utcnow()
-        return 
-    return user, 201
+
+        return jsonify(AuthenticationService.register(user).to_dict(), 201)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Ошибка при создании задачи", "details": str(e)}), 500
+
+
 app.run(debug = True)

@@ -21,3 +21,14 @@ service_login()
 bcrypt()
 login_register()
 rerturn user, err"""
+from model.User import User
+
+class AuthenticationService:
+    userRepository: UserRepository
+    def register(self, user: User):
+        try:
+            user.password = bcrypt(user.password)
+            UserRepository.register(user)
+            return user
+        execpt Exception as e:
+            print(e)
