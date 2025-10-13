@@ -2,8 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from model.Room import Room
-from model.User import User
+from model.Models import User, Room, Base
 from config.config import Settings
 
 class RoomRepository:
@@ -17,6 +16,8 @@ class RoomRepository:
         DATABASE_URL = self.settings.getDatabaseConnectionURL()
         
         self.engine = create_engine(DATABASE_URL)
+        
+        Base.metadata.create_all(bind=self.engine)
     
     def findAll(self):
         try: 
@@ -48,8 +49,8 @@ class RoomRepository:
         try:
             with Session(self.engine) as session:
                 room = session.get(Room, room_id)
-                room.participants.add(user)
+                room.participants.add(user_id)
                 session.commit()
                 session.refresh(room)
         except SQLAlchemyError as e:
-            raise RuntimeError(f'Error of add partisipant {user.id} to room {room_id}: {e}')
+            raise RuntimeError(f'Error of add partisipant {user_id} to room {room_id}: {e}')

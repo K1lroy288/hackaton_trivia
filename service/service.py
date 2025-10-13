@@ -1,5 +1,5 @@
 from repository.UserRepository import UserRepository
-from model.User import User
+from model.Models import User
 import bcrypt
 
 class AuthenticationService:
@@ -8,11 +8,13 @@ class AuthenticationService:
 
     def register(self, user: User):
         try:
+            password_bytes = user.password.encode('utf-8')
             salt = bcrypt.gensalt()
-            hashed_password = bcrypt.hashpw(user.password, salt)
+            hashed_password = bcrypt.hashpw(password_bytes, salt)
             user.password = hashed_password.decode('utf-8')
 
-            self.user_repository.register(user)
+            user_from_database = self.user_repository.register(user)
+            return user_from_database
         except Exception as e:
             raise RuntimeError(f"Error registration: {e}")
 
