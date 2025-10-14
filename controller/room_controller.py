@@ -18,7 +18,9 @@ class JoinRequest(BaseModel):
 
 class RoomCreateRequest(BaseModel):
     name: str
+    userid: int
     password: Optional[str]
+
 
 @router.get("/api/v1/room")
 def controller_get_all_rooms():
@@ -65,6 +67,7 @@ def controller_create_room(data: RoomCreateRequest):
     try:
         room = Room(name=data.name, password=data.password)
         created_room = room_service.create_room(room)
+        room_service.add_participant(data.userid, True)
         return created_room.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
