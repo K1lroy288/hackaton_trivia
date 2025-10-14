@@ -174,3 +174,13 @@ def are_all_participants_ready(self, room_id: int) -> bool:
                 return total >= 2 and total == ready
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error checking readiness in room {room_id}: {e}')
+        
+def deleteRoom(self, room_id):
+    try:
+        with Session(self.engine) as session:
+            room = session.get(Room, room_id)
+            session.delete(room)
+            session.commit()
+    except SQLAlchemyError as e:
+        raise RuntimeError(f'Error of delete room {room_id}: {e}')
+            
