@@ -34,6 +34,10 @@ async def index(request: Request):
 async def index(request: Request):
     return templates.TemplateResponse("rooms.html", {"request": request})
 
+@app.get("/room.html")
+async def index(request: Request):
+    return templates.TemplateResponse("room.html", {"request": request})
+
 # Глобальный обработчик ошибок (опционально, но полезно)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
