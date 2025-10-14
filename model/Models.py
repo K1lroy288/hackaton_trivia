@@ -116,3 +116,14 @@ class Question(Base):
             'category': self.category,
             'difficulty': self.difficulty,
         }
+        
+class PlayerAnswer(Base):
+    __tablename__ = 'player_answers'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    question_id: Mapped[int] = mapped_column(ForeignKey('questions.id'))
+    answer: Mapped[str] = mapped_column(String(255))
+    is_correct: Mapped[bool] = mapped_column(Boolean)
+    points: Mapped[int] = mapped_column(Integer)
+    answered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
