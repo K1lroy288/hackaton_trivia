@@ -292,15 +292,30 @@
             if (roomCard) {
                 const roomId = roomCard.getAttribute('data-room-id');
                 const roomTitle = roomCard.querySelector('.room-title').textContent;
-                joinRoom(roomId, roomTitle);
+                const isPasswordProtected = roomCard.querySelector('.password-protected') !== null;
+                
+                joinRoom(roomId, roomTitle, isPasswordProtected);
             }
         });
 
         // Функция входа в комнату
-        function joinRoom(roomId, roomTitle) {
-            alert(`Присоединяемся к комнате: "${roomTitle}" (ID: ${roomId})`);
-            // Здесь будет редирект на страницу комнаты или открытие модального окна
-            // window.location.href = `/room/${roomId}`;
+        function joinRoom(roomId, roomTitle, isPasswordProtected) {
+            if (isPasswordProtected) {
+                // Запрашиваем пароль
+                const password = prompt(`Введите пароль для комнаты "${roomTitle}":`);
+                if (password === null) return; // Пользователь отменил ввод
+                
+                // В реальном приложении здесь будет проверка пароля на сервере
+                if (password === '1234') { // Пример пароля
+                    // Пароль верный, переходим в комнату
+                    window.location.href = `room.html?id=${roomId}&name=${encodeURIComponent(roomTitle)}&password=true`;
+                } else {
+                    alert('Неверный пароль!');
+                }
+            } else {
+                // Комната без пароля, просто переходим
+                window.location.href = `room.html?id=${roomId}&name=${encodeURIComponent(roomTitle)}&password=false`;
+            }
         }
     </script>
 </body>
