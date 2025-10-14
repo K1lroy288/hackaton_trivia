@@ -74,11 +74,11 @@ class RoomRepository:
         /api/v1/room/{room_id}/join [PATCH]
         body: username, user.id
     """
-    def addParticipant(self, room_id: int, user: User):
+    def addParticipant(self, room_id: int, user_id):
         try:
             with Session(self.engine) as session:
                 room = session.get(Room, room_id)
-                user = session.get(User, user.id)
+                user = session.get(User, user_id)
                 if not room or not user:
                     raise ValueError(f'Room {room_id} or User {user.id} not found')
                 room.participants.add(user)
