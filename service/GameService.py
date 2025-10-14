@@ -6,6 +6,7 @@ from model.Models import Room, PlayerAnswer
 import json
 import asyncio
 from datetime import datetime
+from webSocketManager.manager import manager
 
 class GameService:
     def __init__(self):
@@ -37,8 +38,7 @@ class GameService:
         await self.send_question(room_id, first_question, time_limit=15)
 
     async def send_question(self, room_id: int, question, time_limit: int):
-        from controller.game_controller import broadcast
-        await broadcast(room_id, {
+        await manager.broadcast_to_room(room_id, {
             "type": "new_question",
             "question": question.to_dict(),
             "time_limit": time_limit
@@ -56,8 +56,8 @@ class GameService:
         leaderboard = self.get_leaderboard(room_id)
         
         # 3. Отправить результаты
-        from controller.game_controller import broadcast
-        await broadcast(room_id, {
+        
+        await manager.broadcast_to_room(room_id, {
             "type": "question_results",
             "correct_answer": self.question_repo.findById(question_id).correct_answer,
             "leaderboard": leaderboard
@@ -78,7 +78,7 @@ class GameService:
             # Конец игры
             room.status = "FINISHED"
             self.room_repo.update_room(room)
-            await broadcast(room_id, {
+            await manager.broadcast_to_room(room_id, {
                 "type": "game_over",
                 "leaderboard": leaderboard
             })
