@@ -12,9 +12,11 @@ router = APIRouter()
 room_service = RoomService()
 game_service = GameService()
 
+
 class JoinRequest(BaseModel):
     userid: int
     room_password: str
+
 
 class RoomCreateRequest(BaseModel):
     name: str
@@ -30,6 +32,7 @@ def controller_get_all_rooms():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.get('/api/v1/room/{room_id}')
 def controller_get_room_by_id(room_id: int):
     try:
@@ -39,6 +42,7 @@ def controller_get_room_by_id(room_id: int):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @router.patch("/api/v1/room/{id}")
 def controller_change_running(room_id: int):
@@ -51,6 +55,7 @@ def controller_change_running(room_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.patch("/api/v1/room/{room_id}/join")
 def controller_add_participant(data: JoinRequest, room_id: int = Path(..., gt=0)):
     try:
@@ -62,26 +67,27 @@ def controller_add_participant(data: JoinRequest, room_id: int = Path(..., gt=0)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.post("/api/v1/room", status_code=201)
 def controller_create_room(data: RoomCreateRequest):
     try:
         print(f"API: Creating room '{data.name}' for user {data.user_id}")
-        
+
         # ВАЖНО: Проверим существование пользователя перед созданием комнаты
         user = room_service.user_repository.findById(data.user_id)
         if not user:
             raise ValueError(f"User with ID {data.user_id} does not exist")
-        
+
         # Создаем комнату
         room = Room(name=data.name, password=data.password)
         created_room = room_service.create_room(room)
-        
+
         # Добавляем создателя в комнату
         room_service.add_participant(created_room.id, data.user_id, data.password, True)
-        
+
         print(f"API: Room '{data.name}' created successfully with ID {created_room.id}")
         return created_room.to_dict()
-        
+
     except ValueError as e:
         print(f"API: ValueError - {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -91,6 +97,7 @@ def controller_create_room(data: RoomCreateRequest):
     except Exception as e:
         print(f"API: Unexpected error - {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.get("/api/v1/room/{roomname}")
 def controller_find_room_by_name(roomname: str = Path(..., regex=r"^[a-zA-Z0-9_-]+$")):
@@ -112,6 +119,7 @@ def controller_delete_user_by_id(room_id: int, user_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.delete("/api/v1/room/{room_id}")
 def controller_delete_room_by_id(room_id: int):
     try:
@@ -121,8 +129,9 @@ def controller_delete_room_by_id(room_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 @router.websocket("/ws/room/{room_id}")
-async def web_soсket_room(websocket: WebSocket , room_id: int):
+async def web_soсket_room(websocket: WebSocket, room_id: int):
     await manager.connect(room_id, websocket)
     try:
         while True:
@@ -135,11 +144,13 @@ async def web_soсket_room(websocket: WebSocket , room_id: int):
     except WebSocketDisconnect:
         manager.disconnect(room_id, websocket)
 
+
 @router.post("/api/v1/room/{room_id}/start")
 async def start_game(room_id: int):
     import asyncio
     asyncio.create_task(game_service.start_game(room_id))
     return {"status": "game started"}
+
 
 @router.get("/api/v1/room/{room_id}/participants")
 def controller_get_count_participants(room_id: int):
@@ -150,4 +161,3 @@ def controller_get_count_participants(room_id: int):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
-

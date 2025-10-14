@@ -613,58 +613,61 @@
         }
         
         // Отображение списка участников
-        function displayParticipants(participants) {
-            const participantsList = document.getElementById('participants-list');
-            participantsList.innerHTML = '';
-            
-            // Обновляем счетчик участников
-            document.getElementById('participants-count').textContent = participants.length;
-            
-            // Проверяем, является ли текущий пользователь владельцем
-            isOwner = participants.some(p => p.username === currentUser && p.isOwner);
-            
-            // Считаем готовых участников
-            const readyCount = participants.filter(p => p.isReady).length;
-            const totalCount = participants.length;
-            document.getElementById('ready-count').textContent = `Готовы: ${readyCount}/${totalCount}`;
-            
-            // Проверяем готовность текущего пользователя
-            const currentParticipant = participants.find(p => p.username === currentUser);
-            if (currentParticipant) {
-                isReady = currentParticipant.isReady;
-                updateReadyButton();
-            }
-            
-            // Активируем кнопку начала викторины если все готовы и пользователь владелец
-            if (isOwner && readyCount === totalCount && totalCount > 0) {
-                document.getElementById('start-quiz-btn').disabled = false;
-            } else {
-                document.getElementById('start-quiz-btn').disabled = true;
-            }
-            
-            // Отображаем участников
-            participants.forEach(participant => {
-                const li = document.createElement('li');
-                li.className = 'participant';
-                if (participant.isOwner) {
-                    li.classList.add('participant-owner');
-                }
-                
-                // Создаем аватар с первой буквой имени
-                const firstLetter = participant.username.charAt(0).toUpperCase();
-                
-                li.innerHTML = `
-                    <div class="participant-avatar">${firstLetter}</div>
-                    <div class="participant-name">${participant.username}</div>
-                    ${participant.isOwner ? '<div class="owner-badge">Создатель</div>' : ''}
-                    <div class="ready-status ${participant.isReady ? 'ready-true' : 'ready-false'}">
-                        ${participant.isReady ? 'Готов' : 'Не готов'}
-                    </div>
-                `;
-                
-                participantsList.appendChild(li);
-            });
-        }
+function displayParticipants(participants) {
+    const participantsList = document.getElementById('participants-list');
+
+    // Проверка: если элемент не найден — выходим
+    if (!participantsList) {
+        console.error("Элемент #participants-list не найден!");
+        return;
+    }
+
+    participantsList.innerHTML = '';
+
+    // Обновляем счетчик участников
+    document.getElementById('participants-count').textContent = participants.length;
+
+    // Проверяем, является ли текущий пользователь владельцем
+    isOwner = participants.some(p => p.username === currentUser && p.isOwner);
+
+    // Считаем готовых участников
+    const readyCount = participants.filter(p => p.isReady).length;
+    const totalCount = participants.length;
+    document.getElementById('ready-count').textContent = `Готовы: ${readyCount}/${totalCount}`;
+
+    // Проверяем готовность текущего пользователя
+    const currentParticipant = participants.find(p => p.username === currentUser);
+    if (currentParticipant) {
+        isReady = currentParticipant.isReady;
+        updateReadyButton();
+    }
+
+    // Активируем кнопку начала викторины если все готовы и пользователь владелец
+    const startBtn = document.getElementById('start-quiz-btn');
+    if (startBtn) {
+        startBtn.disabled = !(isOwner && readyCount === totalCount && totalCount > 0);
+    }
+
+    // Отображаем участников
+    participants.forEach(participant => {
+        const li = document.createElement('li');
+        li.className = 'participant';
+
+        // Создаем аватар с первой буквой имени
+        const firstLetter = participant.username.charAt(0).toUpperCase();
+
+        li.innerHTML = `
+            <div class="participant-avatar">${firstLetter}</div>
+            <div class="participant-name">${participant.username}</div>
+            ${participant.isOwner ? '<div class="owner-badge">Создатель</div>' : ''}
+            <div class="ready-status ${participant.isReady ? 'ready-true' : 'ready-false'}">
+                ${participant.isReady ? 'Готов' : 'Не готов'}
+            </div>
+        `;
+
+        participantsList.appendChild(li);
+    });
+}
         
         // Переключение готовности (эмуляция)
         async function toggleReady() {

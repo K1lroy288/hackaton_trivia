@@ -4,8 +4,10 @@ from model.Models import Room
 from webSocketManager import manager
 from service.QuestionService import QuestionService
 
+
 class RoomService:
     room_repository: RoomRepository
+
     def __init__(self):
         self.room_repository = RoomRepository()
         self.user_repository = UserRepository()
@@ -26,22 +28,22 @@ class RoomService:
     def add_participant(self, room_id: int, user_id: int, room_pass: str = None, creator: bool = False):
         try:
             print(f"Adding participant: room_id={room_id}, user_id={user_id}, creator={creator}")  # Логирование
-            
+
             # Получаем комнату по ID
             room = self.room_repository.findById(room_id)
             if not room:
                 raise ValueError(f"Room with ID {room_id} not found")
-            
+
             # Проверяем пароль если требуется (для не-создателей)
             if not creator and room.password:
                 print(f"Room requires password verification")  # Логирование
                 if not self.verify_room_password(room_id, room_pass):
                     raise ValueError("Invalid room password")
-            
+
             # Добавляем участника
             self.room_repository.addParticipant(room_id, user_id)
             print(f"Participant {user_id} added to room {room_id}")  # Логирование
-            
+
         except Exception as e:
             print(f"Error in add_participant: {str(e)}")  # Логирование
             raise
@@ -76,5 +78,5 @@ class RoomService:
         self.room_repository.deleteRoom(room_id)
 
     def getCountParticipants(self, room_id: int):
-        users = self.room_repository.getParticipants(room_id)
-        return [user.to_dict() for user in users]
+        users_id = self.room_repository.getParticipants(room_id)
+        return [user.to_dict() for user in users_id]
