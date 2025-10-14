@@ -133,12 +133,6 @@
         .room-title {
             font-weight: 600;
             color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .room-description {
-            color: #666;
-            font-size: 14px;
         }
         
         .room-stats {
@@ -183,7 +177,7 @@
             color: #2ecc71;
         }
         
-        /* Стили для модального окна с паролем */
+        /* Стили для модальных окон */
         .modal {
             display: none;
             position: fixed;
@@ -276,6 +270,33 @@
             border-radius: 6px;
             margin: 10px 0;
         }
+
+        /* Стили для формы создания комнаты */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -313,9 +334,40 @@
         </div>
     </div>
 
+    <!-- Модальное окно для создания комнаты -->
+    <div class="modal" id="create-room-modal">
+        <div class="modal-content">
+            <div class="modal-title">Создание новой комнаты</div>
+            <form id="create-room-form">
+                <div class="form-group">
+                    <label for="room-name-input">Название комнаты</label>
+                    <input type="text" id="room-name-input" placeholder="Введите название комнаты" required>
+                </div>
+                <div class="form-group">
+                    <label for="room-max-players">Максимум игроков</label>
+                    <select id="room-max-players">
+                        <option value="2">2 игрока</option>
+                        <option value="4" selected>4 игрока</option>
+                        <option value="6">6 игроков</option>
+                        <option value="8">8 игроков</option>
+                        <option value="10">10 игроков</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="room-password-input">Пароль (необязательно)</label>
+                    <input type="password" id="room-password-input" placeholder="Введите пароль для комнаты">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="connect-btn">Создать комнату</button>
+                    <button type="button" class="cancel-btn" id="cancel-create-btn">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Базовый URL для API (замените на ваш реальный URL)
-        const API_BASE_URL = 'http://localhost:8000';
+        const API_BASE_URL = 'http://localhost:3425';
         
         // Проверяем авторизацию при загрузке страницы
         window.addEventListener('DOMContentLoaded', function() {
@@ -336,13 +388,83 @@
         // Кнопка выхода
         document.getElementById('logout-btn').addEventListener('click', function() {
             localStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
+            window.location.href = '/';
         });
 
-        // Создание комнаты
+        // Создание комнаты - открытие модального окна
         document.getElementById('create-room-btn').addEventListener('click', function() {
-            alert('Функция создания комнаты будет реализована позже!');
-            // Здесь можно добавить логику создания новой комнаты
+            document.getElementById('create-room-modal').style.display = 'flex';
+            document.getElementById('room-name-input').focus();
+        });
+
+        // Отмена создания комнаты
+        document.getElementById('cancel-create-btn').addEventListener('click', function() {
+            document.getElementById('create-room-modal').style.display = 'none';
+            document.getElementById('create-room-form').reset();
+        });
+
+        // Закрытие модального окна создания комнаты при клике вне его
+        document.getElementById('create-room-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('create-room-modal').style.display = 'none';
+                document.getElementById('create-room-form').reset();
+            }
+        });
+
+        // Обработка формы создания комнаты
+        document.getElementById('create-room-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const roomName = document.getElementById('room-name-input').value;
+            const maxPlayers = document.getElementById('room-max-players').value;
+            const password = document.getElementById('room-password-input').value;
+            
+            if (!roomName.trim()) {
+                alert('Пожалуйста, введите название комнаты');
+                return;
+            }
+            
+            try {
+                const createBtn = document.querySelector('#create-room-form .connect-btn');
+                createBtn.disabled = true;
+                createBtn.textContent = 'Создание...';
+                
+                const roomData = {
+                    name: roomName,
+                    max_players: parseInt(maxPlayers),
+                    password: password || null
+                };
+                
+                // API вызов для создания комнаты
+                const response = await fetch(`${API_BASE_URL}/api/v1/room`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(roomData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const newRoom = await response.json();
+                
+                // Закрываем модальное окно и обновляем список комнат
+                document.getElementById('create-room-modal').style.display = 'none';
+                document.getElementById('create-room-form').reset();
+                
+                alert('Комната успешно создана!');
+                loadRooms(); // Перезагружаем список комнат
+                
+            } catch (error) {
+                console.error('Ошибка при создании комнаты:', error);
+                alert('Ошибка при создании комнаты. Попробуйте снова.');
+            } finally {
+                const createBtn = document.querySelector('#create-room-form .connect-btn');
+                createBtn.disabled = false;
+                createBtn.textContent = 'Создать комнату';
+            }
         });
 
         // Переменные для хранения информации о выбранной комнате
@@ -417,7 +539,6 @@
                         <span class="password-icon ${passwordClass}">${passwordIcon}</span>
                         ${room.name || 'Без названия'}
                     </div>
-                    <div class="room-description">${room.description || 'Описание отсутствует'}</div>
                 </div>
                 <div class="room-stats">
                     <span>👥 ${currentPlayers}/${maxPlayers}</span>
