@@ -343,7 +343,7 @@
             const savedUser = localStorage.getItem('currentUser');
             const savedUserId = localStorage.getItem('currentUserId');
             
-            if (!savedUser) {
+            if (!savedUser || !savedUserId) {
                 // Если пользователь не авторизован, перенаправляем на страницу авторизации
                 window.location.href = 'index.html';
                 return;
@@ -351,13 +351,6 @@
             
             // Устанавливаем имя пользователя
             document.getElementById('username-display').textContent = savedUser;
-            
-            // Если нет ID пользователя, создаем временный (в реальном приложении нужно получать при авторизации)
-            if (!savedUserId) {
-                // Генерируем временный ID (в реальном приложении это должно приходить с бэкенда)
-                const tempUserId = Math.floor(Math.random() * 1000) + 1;
-                localStorage.setItem('currentUserId', tempUserId.toString());
-            }
             
             // Загружаем список комнат
             loadRooms();
@@ -396,9 +389,15 @@
             
             const roomName = document.getElementById('room-name-input').value;
             const password = document.getElementById('room-password-input').value;
+            const userId = localStorage.getItem('currentUserId');
             
             if (!roomName.trim()) {
                 alert('Пожалуйста, введите название комнаты');
+                return;
+            }
+            
+            if (!userId) {
+                alert('Ошибка: ID пользователя не найден');
                 return;
             }
             
@@ -409,10 +408,10 @@
                 
                 const roomData = {
                     name: roomName,
-                    password: password || null
+                    password: password || null,
+                    user_id: parseInt(userId)  // ← отправляем ID создателя
                 };
                 
-                // API вызов для создания комнаты
                 const response = await fetch(`${API_BASE_URL}/api/v1/room`, {
                     method: 'POST',
                     headers: {
@@ -427,12 +426,8 @@
                 }
                 
                 const newRoom = await response.json();
-                
-                // Закрываем модальное окно и очищаем форму
                 document.getElementById('create-room-modal').style.display = 'none';
                 document.getElementById('create-room-form').reset();
-                
-                // Сразу переходим в созданную комнату
                 window.location.href = `room.html?id=${newRoom.id}`;
                 
             } catch (error) {

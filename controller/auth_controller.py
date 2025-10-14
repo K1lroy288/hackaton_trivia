@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from service.AuthenticationService import AuthenticationService
 from model.Models import User
+from repository.UserRepository import UserRepository
 
 router = APIRouter()
 auth_service = AuthenticationService()
@@ -35,3 +36,11 @@ def controller_login(data: AuthRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+""" @router.get("/{user_id}")
+def getUserId():
+    userrepository = UserRepository()
+    user = userrepository.getUserById(1)
+    user2 = userrepository.findById(1)
+    
+    return [user.to_dict(), user2.to_dict()] """

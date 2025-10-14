@@ -354,7 +354,10 @@
                     .then(response => {
                         showSuccessMessage('Вход выполнен успешно!');
                         currentUser = username;
-                        localStorage.setItem('currentUser', username);
+                        
+                        // Уже сохранено в функции loginUser
+                        // localStorage.setItem('currentUser', username);
+                        
                         setTimeout(() => {
                             // Переход на страницу комнат после успешного входа
                             window.location.href = 'rooms.html';
@@ -376,6 +379,69 @@
             }
         });
 
+        // Обработка формы регистрации
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            resetErrorMessages('register');
+            
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const registerBtn = document.getElementById('register-btn');
+            
+            let isValid = true;
+            
+            if (username.length < 3) {
+                showError('register-username-error', 'Логин должен содержать не менее 3 символов');
+                isValid = false;
+            }
+            
+            if (password.length < 6) {
+                showError('register-password-error', 'Пароль должен содержать не менее 6 символов');
+                isValid = false;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('register-confirm-error', 'Пароли не совпадают');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Блокируем кнопку и показываем состояние загрузки
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Регистрация...';
+                document.getElementById('register-card').classList.add('loading');
+                
+                // Реальный API вызов
+                registerUser(username, password)
+                    .then(response => {
+                        showSuccessMessage('Регистрация прошла успешно! Автоматический вход...');
+                        
+                        // Уже сохранено в функции registerUser
+                        // localStorage.setItem('currentUser', username);
+                        // localStorage.setItem('currentUserId', response.id.toString());
+                        
+                        setTimeout(() => {
+                            // Переход на страницу комнат после успешной регистрации
+                            window.location.href = 'rooms.html';
+                        }, 1500);
+                    })
+                    .catch(error => {
+                        if (error.message.includes('400')) {
+                            showError('register-username-error', 'Ошибка регистрации. Возможно, такой логин уже существует.');
+                        } else {
+                            showError('register-username-error', 'Ошибка соединения с сервером');
+                        }
+                    })
+                    .finally(() => {
+                        // Восстанавливаем кнопку
+                        registerBtn.disabled = false;
+                        registerBtn.textContent = 'Зарегистрироваться';
+                        document.getElementById('register-card').classList.remove('loading');
+                    });
+            }
+        });
+
         // Реальные API функции
         async function registerUser(username, password) {
             const response = await fetch(`${API_BASE_URL}/api/v1/trivia/register`, {
@@ -393,7 +459,13 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            return await response.json();
+            const userData = await response.json();
+            
+            // ВАЖНО: Сохраняем данные пользователя
+            localStorage.setItem('currentUser', userData.username);
+            localStorage.setItem('currentUserId', userData.id.toString());
+            
+            return userData;
         }
 
         async function loginUser(username, password) {
@@ -412,7 +484,13 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            return await response.json();
+            const userData = await response.json();
+            
+            // ВАЖНО: Сохраняем данные пользователя
+            localStorage.setItem('currentUser', userData.username);
+            localStorage.setItem('currentUserId', userData.id.toString());
+            
+            return userData;
         }
 
         // Вспомогательные функции
