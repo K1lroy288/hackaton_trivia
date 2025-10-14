@@ -153,7 +153,7 @@ class RoomRepository:
                 room = session.get(Room, room_id)
                 if not room.password:
                     return False
-                if not bcrypt.checkpw(room_password.encode('utf-8'), room.password.encode('utf-8')):
+                if not bcrypt.checkpw(room_password.encode('utf-8'), str(room.password).encode('utf-8')):
                     raise ValueError("Wrong password")
                 return True
         except SQLAlchemyError as e:
