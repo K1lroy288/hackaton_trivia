@@ -261,67 +261,6 @@
             box-shadow: none;
         }
         
-        .chat-section {
-            margin-top: 20px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        .chat-messages {
-            height: 200px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            background-color: #f8f9fa;
-        }
-        
-        .chat-input {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .chat-input input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        
-        .chat-input button {
-            padding: 12px 20px;
-            background: linear-gradient(to right, #6a11cb, #2575fc);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        
-        .message-sender {
-            font-weight: 600;
-            color: #2575fc;
-            margin-right: 5px;
-        }
-        
-        .message-system {
-            background-color: #fff4e6;
-            font-style: italic;
-            text-align: center;
-            color: #f39c12;
-        }
-        
         .password-icon {
             font-size: 20px;
             margin-right: 10px;
@@ -395,6 +334,21 @@
             background: #e0e0e0;
             color: #333;
         }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error-message {
+            background-color: #ffeaea;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -412,64 +366,55 @@
         
         <!-- Основной контент комнаты -->
         <div class="card">
-            <div class="room-header">
-                <div class="room-title">
-                    <span id="room-icon" class="password-icon"></span>
-                    <span id="room-name">Название комнаты</span>
-                </div>
-                <div id="room-status" class="room-status status-open">Открыта</div>
-            </div>
+            <div id="loading-message" class="loading">Загрузка данных комнаты...</div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
             
-            <div class="room-description" id="room-description">
-                Описание комнаты будет здесь
-            </div>
-            
-            <div class="room-content">
-                <!-- Секция участников -->
-                <div class="participants-section">
-                    <h3 class="section-title">Участники (<span id="participants-count">0</span>/<span id="max-participants">0</span>)</h3>
-                    <ul class="participants-list" id="participants-list">
-                        <!-- Список участников будет заполняться динамически -->
-                    </ul>
+            <div id="room-content" style="display: none;">
+                <div class="room-header">
+                    <div class="room-title">
+                        <span id="room-icon" class="password-icon"></span>
+                        <span id="room-name">Название комнаты</span>
+                    </div>
+                    <div id="room-status" class="room-status status-open">Открыта</div>
                 </div>
                 
-                <!-- Секция викторины -->
-                <div class="quiz-section">
-                    <h3 class="section-title">Информация о викторине</h3>
-                    
-                    <div class="quiz-info">
-                        <div class="quiz-stats">
-                            <div class="stat">
-                                <div class="stat-value" id="questions-count">10</div>
-                                <div class="stat-label">вопросов</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-value" id="time-limit">30</div>
-                                <div class="stat-label">секунд на ответ</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-value" id="difficulty">Средняя</div>
-                                <div class="stat-label">сложность</div>
-                            </div>
-                        </div>
-                        
-                        <p id="quiz-theme">Тема викторины: Общие знания</p>
+                <div class="room-description" id="room-description">
+                    Описание комнаты будет здесь
+                </div>
+                
+                <div class="room-content">
+                    <!-- Секция участников -->
+                    <div class="participants-section">
+                        <h3 class="section-title">Участники (<span id="participants-count">0</span>/<span id="max-participants">0</span>)</h3>
+                        <ul class="participants-list" id="participants-list">
+                            <!-- Список участников будет заполняться динамически -->
+                        </ul>
                     </div>
                     
-                    <button class="start-quiz-btn" id="start-quiz-btn" disabled>Начать викторину</button>
-                    
-                    <!-- Чат комнаты -->
-                    <div class="chat-section">
-                        <h3 class="section-title">Чат комнаты</h3>
-                        <div class="chat-messages" id="chat-messages">
-                            <div class="message message-system">
-                                Добро пожаловать в комнату! Викторина начнется, когда создатель комнаты нажмет кнопку "Начать"
+                    <!-- Секция викторины -->
+                    <div class="quiz-section">
+                        <h3 class="section-title">Информация о викторине</h3>
+                        
+                        <div class="quiz-info">
+                            <div class="quiz-stats">
+                                <div class="stat">
+                                    <div class="stat-value" id="questions-count">10</div>
+                                    <div class="stat-label">вопросов</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value" id="time-limit">30</div>
+                                    <div class="stat-label">секунд на ответ</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value" id="difficulty">Средняя</div>
+                                    <div class="stat-label">сложность</div>
+                                </div>
                             </div>
+                            
+                            <p id="quiz-theme">Тема викторины: Общие знания</p>
                         </div>
-                        <div class="chat-input">
-                            <input type="text" id="chat-input" placeholder="Введите сообщение...">
-                            <button id="send-message-btn">Отправить</button>
-                        </div>
+                        
+                        <button class="start-quiz-btn" id="start-quiz-btn" disabled>Начать викторину</button>
                     </div>
                 </div>
             </div>
@@ -489,97 +434,17 @@
     </div>
 
     <script>
+        // API адрес
+        const API_BASE_URL = 'flag_for_address';
+        
         // Получаем параметры из URL
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('id');
-        const roomName = urlParams.get('name');
-        const roomDescription = urlParams.get('description');
-        const roomPassword = urlParams.get('password') === 'true';
-        const roomMaxParticipants = parseInt(urlParams.get('max')) || 8;
         
-        // Данные комнаты (в реальном приложении будут загружаться с сервера)
-        const roomData = {
-            '1': {
-                name: 'Общая викторина #1',
-                description: 'Тест на общие знания для всех желающих. Вопросы из разных областей: наука, история, искусство, спорт и многое другое.',
-                password: false,
-                maxParticipants: 8,
-                questions: 10,
-                timeLimit: 30,
-                difficulty: 'Средняя',
-                theme: 'Общие знания',
-                status: 'open'
-            },
-            '2': {
-                name: 'География мира',
-                description: 'Проверьте свои знания географии. Континенты, страны, столицы, реки, горы и многое другое.',
-                password: false,
-                maxParticipants: 8,
-                questions: 15,
-                timeLimit: 20,
-                difficulty: 'Сложная',
-                theme: 'География',
-                status: 'full'
-            },
-            '3': {
-                name: 'Исторический баттл',
-                description: 'Соревнование по истории для эрудитов. От древних цивилизаций до современности.',
-                password: true,
-                maxParticipants: 6,
-                questions: 12,
-                timeLimit: 25,
-                difficulty: 'Сложная',
-                theme: 'История',
-                status: 'playing'
-            },
-            '4': {
-                name: 'Кино и сериалы',
-                description: 'Угадай фильм по кадру и актера по фото. Вопросы о знаменитых фильмах, сериалах и актерах.',
-                password: true,
-                maxParticipants: 10,
-                questions: 20,
-                timeLimit: 15,
-                difficulty: 'Легкая',
-                theme: 'Кино',
-                status: 'open'
-            }
-        };
-        
-        // Участники комнаты (в реальном приложении будут загружаться с сервера)
-        const participants = {
-            '1': [
-                { name: 'Алексей', isOwner: true },
-                { name: 'Мария', isOwner: false },
-                { name: 'Дмитрий', isOwner: false },
-                { name: 'Ольга', isOwner: false }
-            ],
-            '2': [
-                { name: 'Иван', isOwner: true },
-                { name: 'Екатерина', isOwner: false },
-                { name: 'Сергей', isOwner: false },
-                { name: 'Анна', isOwner: false },
-                { name: 'Павел', isOwner: false },
-                { name: 'Наталья', isOwner: false },
-                { name: 'Михаил', isOwner: false },
-                { name: 'Юлия', isOwner: false }
-            ],
-            '3': [
-                { name: 'Владимир', isOwner: true },
-                { name: 'Татьяна', isOwner: false },
-                { name: 'Андрей', isOwner: false },
-                { name: 'Елена', isOwner: false },
-                { name: 'Артем', isOwner: false },
-                { name: 'Светлана', isOwner: false }
-            ],
-            '4': [
-                { name: 'Никита', isOwner: true },
-                { name: 'Алина', isOwner: false },
-                { name: 'Роман', isOwner: false }
-            ]
-        };
-        
-        // Текущий пользователь
+        // Текущий пользователь и комната
         let currentUser = null;
+        let currentRoom = null;
+        let isOwner = false;
         
         // Инициализация страницы
         document.addEventListener('DOMContentLoaded', function() {
@@ -596,9 +461,6 @@
             // Загружаем данные комнаты
             loadRoomData();
             
-            // Загружаем участников
-            loadParticipants();
-            
             // Назначаем обработчики событий
             document.getElementById('back-btn').addEventListener('click', function() {
                 window.location.href = 'rooms.html';
@@ -607,13 +469,6 @@
             document.getElementById('logout-btn').addEventListener('click', function() {
                 localStorage.removeItem('currentUser');
                 window.location.href = 'index.html';
-            });
-            
-            document.getElementById('send-message-btn').addEventListener('click', sendMessage);
-            document.getElementById('chat-input').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
             });
             
             document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
@@ -628,27 +483,52 @@
         });
         
         // Загрузка данных комнаты
-        function loadRoomData() {
-            if (!roomId || !roomData[roomId]) {
-                alert('Комната не найдена!');
-                window.location.href = 'rooms.html';
+        async function loadRoomData() {
+            if (!roomId) {
+                showError('ID комнаты не указан');
                 return;
             }
             
-            const room = roomData[roomId];
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Комната не найдена');
+                }
+                
+                currentRoom = await response.json();
+                displayRoomData();
+                
+                // Загружаем участников
+                await loadParticipants();
+                
+                // Проверяем, нужен ли пароль
+                if (currentRoom.isPasswordProtected && !currentRoom.joined) {
+                    document.getElementById('password-modal').style.display = 'flex';
+                }
+                
+            } catch (error) {
+                showError('Ошибка загрузки данных комнаты: ' + error.message);
+            }
+        }
+        
+        // Отображение данных комнаты
+        function displayRoomData() {
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('room-content').style.display = 'block';
             
             // Устанавливаем данные комнаты
-            document.getElementById('room-name').textContent = room.name;
-            document.getElementById('room-description').textContent = room.description;
-            document.getElementById('questions-count').textContent = room.questions;
-            document.getElementById('time-limit').textContent = room.timeLimit;
-            document.getElementById('difficulty').textContent = room.difficulty;
-            document.getElementById('quiz-theme').textContent = `Тема викторины: ${room.theme}`;
-            document.getElementById('max-participants').textContent = room.maxParticipants;
+            document.getElementById('room-name').textContent = currentRoom.name;
+            document.getElementById('room-description').textContent = currentRoom.description;
+            document.getElementById('questions-count').textContent = currentRoom.questionCount;
+            document.getElementById('time-limit').textContent = currentRoom.timeLimit;
+            document.getElementById('difficulty').textContent = getDifficultyText(currentRoom.difficulty);
+            document.getElementById('quiz-theme').textContent = `Тема викторины: ${currentRoom.theme}`;
+            document.getElementById('max-participants').textContent = currentRoom.maxParticipants;
             
             // Устанавливаем иконку пароля
             const roomIcon = document.getElementById('room-icon');
-            if (room.password) {
+            if (currentRoom.isPasswordProtected) {
                 roomIcon.classList.add('password-protected');
                 roomIcon.textContent = '🔒';
             } else {
@@ -658,35 +538,45 @@
             
             // Устанавливаем статус комнаты
             const roomStatus = document.getElementById('room-status');
-            roomStatus.textContent = getStatusText(room.status);
-            roomStatus.className = 'room-status ' + getStatusClass(room.status);
+            roomStatus.textContent = getStatusText(currentRoom.status);
+            roomStatus.className = 'room-status ' + getStatusClass(currentRoom.status);
             
             // Активируем кнопку начала викторины для владельца комнаты
-            const currentParticipants = participants[roomId] || [];
-            const isOwner = currentParticipants.some(p => p.name === currentUser && p.isOwner);
-            
-            if (isOwner && room.status === 'open') {
+            if (isOwner && currentRoom.status === 'open') {
                 document.getElementById('start-quiz-btn').disabled = false;
             }
         }
         
         // Загрузка списка участников
-        function loadParticipants() {
+        async function loadParticipants() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/participants`);
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки участников');
+                }
+                
+                const participants = await response.json();
+                displayParticipants(participants);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки участников:', error);
+            }
+        }
+        
+        // Отображение списка участников
+        function displayParticipants(participants) {
             const participantsList = document.getElementById('participants-list');
             participantsList.innerHTML = '';
             
-            const currentParticipants = participants[roomId] || [];
-            
-            // Добавляем текущего пользователя, если его еще нет в списке
-            if (currentParticipants.length === 0 || !currentParticipants.some(p => p.name === currentUser)) {
-                currentParticipants.push({ name: currentUser, isOwner: currentParticipants.length === 0 });
-            }
-            
             // Обновляем счетчик участников
-            document.getElementById('participants-count').textContent = currentParticipants.length;
+            document.getElementById('participants-count').textContent = participants.length;
+            
+            // Проверяем, является ли текущий пользователь владельцем
+            isOwner = participants.some(p => p.username === currentUser && p.isOwner);
             
             // Отображаем участников
-            currentParticipants.forEach(participant => {
+            participants.forEach(participant => {
                 const li = document.createElement('li');
                 li.className = 'participant';
                 if (participant.isOwner) {
@@ -694,11 +584,11 @@
                 }
                 
                 // Создаем аватар с первой буквой имени
-                const firstLetter = participant.name.charAt(0).toUpperCase();
+                const firstLetter = participant.username.charAt(0).toUpperCase();
                 
                 li.innerHTML = `
                     <div class="participant-avatar">${firstLetter}</div>
-                    <div class="participant-name">${participant.name}</div>
+                    <div class="participant-name">${participant.username}</div>
                     ${participant.isOwner ? '<div class="owner-badge">Создатель</div>' : ''}
                 `;
                 
@@ -706,45 +596,90 @@
             });
         }
         
-        // Отправка сообщения в чат
-        function sendMessage() {
-            const chatInput = document.getElementById('chat-input');
-            const message = chatInput.value.trim();
-            
-            if (message === '') return;
-            
-            const chatMessages = document.getElementById('chat-messages');
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message';
-            messageElement.innerHTML = `<span class="message-sender">${currentUser}:</span> ${message}`;
-            
-            chatMessages.appendChild(messageElement);
-            chatInput.value = '';
-            
-            // Прокручиваем чат вниз
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
         // Начало викторины
-        function startQuiz() {
-            alert('Викторина начинается!');
-            // Здесь будет переход на страницу викторины
+        async function startQuiz() {
+            if (!isOwner) {
+                alert('Только создатель комнаты может начать викторину');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка начала викторины');
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Переходим на страницу викторины
+                    window.location.href = `quiz.html?roomId=${roomId}`;
+                } else {
+                    alert('Не удалось начать викторину: ' + result.message);
+                }
+                
+            } catch (error) {
+                alert('Ошибка начала викторины: ' + error.message);
+            }
         }
         
         // Проверка пароля
-        function checkPassword() {
+        async function checkPassword() {
             const passwordInput = document.getElementById('room-password');
             const password = passwordInput.value;
             
-            // В реальном приложении здесь будет проверка на сервере
-            if (password === '1234') { // Пример пароля
-                document.getElementById('password-modal').style.display = 'none';
-                // Пароль верный, можно продолжить
-            } else {
-                alert('Неверный пароль!');
-                passwordInput.value = '';
-                passwordInput.focus();
+            if (!password) {
+                alert('Введите пароль');
+                return;
             }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser,
+                        password: password
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка входа в комнату');
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('password-modal').style.display = 'none';
+                    // Обновляем данные комнаты
+                    await loadRoomData();
+                } else {
+                    alert('Неверный пароль!');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+                
+            } catch (error) {
+                alert('Ошибка входа в комнату: ' + error.message);
+            }
+        }
+        
+        // Показать сообщение об ошибке
+        function showError(message) {
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-message').style.display = 'block';
         }
         
         // Вспомогательные функции
@@ -763,6 +698,15 @@
                 case 'full': return 'status-full';
                 case 'playing': return 'status-playing';
                 default: return 'status-open';
+            }
+        }
+        
+        function getDifficultyText(difficulty) {
+            switch(difficulty) {
+                case 'easy': return 'Легкая';
+                case 'medium': return 'Средняя';
+                case 'hard': return 'Сложная';
+                default: return 'Средняя';
             }
         }
     </script>
