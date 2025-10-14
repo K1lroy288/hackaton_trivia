@@ -100,7 +100,7 @@ def controller_delete_room_by_id(room_id: int):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.websocket("/ws/room/{room_id}")
-async def websoсket_room(websocket: WebSocket , room_id: int):
+async def web_soсket_room(websocket: WebSocket , room_id: int):
     await manager.connect(room_id, websocket)
     try:
         while True:

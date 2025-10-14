@@ -1,5 +1,7 @@
 from repository.RoomRepository import RoomRepository
 from model.Models import Room
+from webSocketManager import manager
+from service.QuestionService import QuestionService
 
 class RoomService:
     room_repository: RoomRepository
