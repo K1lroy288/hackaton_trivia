@@ -18,7 +18,7 @@ class JoinRequest(BaseModel):
 
 class RoomCreateRequest(BaseModel):
     name: str
-    userid: int
+    user_id: int
     password: Optional[str]
 
 
@@ -65,16 +65,32 @@ def controller_add_participant(data: JoinRequest, room_id: int = Path(..., gt=0)
 @router.post("/api/v1/room", status_code=201)
 def controller_create_room(data: RoomCreateRequest):
     try:
+        print(f"API: Creating room '{data.name}' for user {data.user_id}")
+        
+        # ВАЖНО: Проверим существование пользователя перед созданием комнаты
+        user = room_service.user_repository.findById(data.user_id)
+        if not user:
+            raise ValueError(f"User with ID {data.user_id} does not exist")
+        
+        # Создаем комнату
         room = Room(name=data.name, password=data.password)
         created_room = room_service.create_room(room)
-        room_service.add_participant(data.userid, True)
+        
+        # Добавляем создателя в комнату
+        room_service.add_participant(created_room.id, data.user_id, data.password, True)
+        
+        print(f"API: Room '{data.name}' created successfully with ID {created_room.id}")
         return created_room.to_dict()
+        
     except ValueError as e:
+        print(f"API: ValueError - {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail="Database error")
+        print(f"API: RuntimeError - {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        print(f"API: Unexpected error - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/api/v1/room/{roomname}")
 def controller_find_room_by_name(roomname: str = Path(..., regex=r"^[a-zA-Z0-9_-]+$")):

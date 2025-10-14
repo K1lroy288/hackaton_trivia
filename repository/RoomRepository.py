@@ -75,18 +75,45 @@ class RoomRepository:
         /api/v1/room/{room_id}/join [PATCH]
         body: username, user.id
     """
-    def addParticipant(self, room_id: int, user_id):
+    def addParticipant(self, room_id: int, user_id: int):
         try:
+            print(f"Repository: Adding user {user_id} to room {room_id}")  # Логирование
+            
             with Session(self.engine) as session:
+                # Проверяем существование комнаты и пользователя
                 room = session.get(Room, room_id)
+                if not room:
+                    raise ValueError(f"Room {room_id} not found")
+                    
                 user = session.get(User, user_id)
-                if not room or not user:
-                    raise ValueError(f'Room {room_id} or User {user.id} not found')
-                room.participants.add(user)
+                if not user:
+                    raise ValueError(f"User {user_id} not found")
+                
+                # Проверяем, не является ли пользователь уже участником
+                existing = session.execute(
+                    select(RoomParticipant)
+                    .where(RoomParticipant.room_id == room_id)
+                    .where(RoomParticipant.user_id == user_id)
+                ).scalar_one_or_none()
+
+                if existing:
+                    print(f"User {user_id} is already in room {room_id}")  # Логирование
+                    return  # Уже участник, ничего не делаем
+
+                # Создаем новую запись участника
+                rp = RoomParticipant(room_id=room_id, user_id=user_id)
+                session.add(rp)
                 session.commit()
-                session.refresh(room)
+                session.refresh(rp)
+                
+                print(f"Successfully added user {user_id} to room {room_id}")  # Логирование
+                
         except SQLAlchemyError as e:
-            raise RuntimeError(f'Error of add partisipant {user.id} to room {room_id}: {e}')
+            print(f"SQLAlchemy error in addParticipant: {str(e)}")  # Логирование
+            raise RuntimeError(f'Error adding participant {user_id} to room {room_id}: {e}')
+        except Exception as e:
+            print(f"Unexpected error in addParticipant: {str(e)}")  # Логирование
+            raise
     
     """ 
         эта функция создает комнату
@@ -134,10 +161,15 @@ class RoomRepository:
     def removeParticipant(self, room_id: int, user_id: int):
         try:
             with Session(self.engine) as session:
-                room = session.get(Room, room_id)
-                user = session.get(Room, user_id)
-                if room and user and user in room.participants:
-                    room.participants.remove(user)
+                # Находим запись в RoomParticipant
+                participant = session.execute(
+                    select(RoomParticipant)
+                    .where(RoomParticipant.room_id == room_id)
+                    .where(RoomParticipant.user_id == user_id)
+                ).scalar_one_or_none()
+                
+                if participant:
+                    session.delete(participant)
                     session.commit()
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error removing participant {user_id} from room {room_id}: {e}')
@@ -201,3 +233,11 @@ class RoomRepository:
                 return participants
         except SQLAlchemyError as e:
             RuntimeError(f'Error of get participants of room {room_id}: {e}')
+            
+    def getRoomByName(self, name: str):
+        try:
+            with Session(self.engine) as session:
+                stmt = select(Room.id).where(Room.name == name)
+                return session.scalar(stmt)  # ✅ Возвращает фактический ID
+        except SQLAlchemyError as e:
+            raise RuntimeError(f'Error fetching room by name {name}: {e}')

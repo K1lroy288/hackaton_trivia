@@ -23,16 +23,38 @@ class RoomService:
     def change_running(self, room_id: int):
         self.room_repository.changeRunning(room_id)
 
-    def add_participant(self, room_id: int, user_id: int, room_pass: str, creator: bool):
-        if not creator and room_pass:
-            if self.verify_room_password(room_id, room_pass):
-                self.room_repository.addParticipant(room_id, user_id)
-        else:
+    def add_participant(self, room_id: int, user_id: int, room_pass: str = None, creator: bool = False):
+        try:
+            print(f"Adding participant: room_id={room_id}, user_id={user_id}, creator={creator}")  # Логирование
+            
+            # Получаем комнату по ID
+            room = self.room_repository.findById(room_id)
+            if not room:
+                raise ValueError(f"Room with ID {room_id} not found")
+            
+            # Проверяем пароль если требуется (для не-создателей)
+            if not creator and room.password:
+                print(f"Room requires password verification")  # Логирование
+                if not self.verify_room_password(room_id, room_pass):
+                    raise ValueError("Invalid room password")
+            
+            # Добавляем участника
             self.room_repository.addParticipant(room_id, user_id)
+            print(f"Participant {user_id} added to room {room_id}")  # Логирование
+            
+        except Exception as e:
+            print(f"Error in add_participant: {str(e)}")  # Логирование
+            raise
 
     def create_room(self, room: Room):
-        new_room = self.room_repository.createRoom(room)
-        return new_room
+        try:
+            print(f"Creating room: {room.name}")  # Логирование
+            new_room = self.room_repository.createRoom(room)
+            print(f"Room created with ID: {new_room.id}")  # Логирование
+            return new_room
+        except Exception as e:
+            print(f"Error in create_room: {str(e)}")  # Логирование
+            raise
 
     def find_room_by_name(self, room_name: str):
         room = self.room_repository.findByRoomname(room_name)

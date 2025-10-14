@@ -55,4 +55,12 @@ class UserRepository:
         except SQLAlchemyError as e:
             RuntimeError(f'Error of get user {user_id}: {e}')
             
+        # В UserRepository добавьте:
+    def findById(self, user_id: int):
+        try:
+            with Session(self.engine) as session:
+                return session.get(User, user_id)
+        except SQLAlchemyError as e:
+            raise RuntimeError(f'Error fetching user {user_id}: {e}')
+            
                     
