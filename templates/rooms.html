@@ -182,6 +182,85 @@
         .no-password {
             color: #2ecc71;
         }
+        
+        /* Стили для модального окна с паролем */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .connect-btn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .connect-btn:hover {
+            background: linear-gradient(to right, #2980b9, #2573a7);
+        }
+        
+        .cancel-btn {
+            flex: 1;
+            padding: 12px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .cancel-btn:hover {
+            background: #d0d0d0;
+        }
     </style>
 </head>
 <body>
@@ -260,6 +339,19 @@
         </div>
     </div>
 
+    <!-- Модальное окно для ввода пароля -->
+    <div class="modal" id="password-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">Ввод данных</div>
+            <div id="modal-description">Введите пароль для комнаты "<span id="room-name"></span>":</div>
+            <input type="password" class="password-input" id="password-input" placeholder="Пароль">
+            <div class="modal-buttons">
+                <button class="connect-btn" id="connect-btn">Подключиться</button>
+                <button class="cancel-btn" id="cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Проверяем авторизацию при загрузке страницы
         window.addEventListener('DOMContentLoaded', function() {
@@ -286,37 +378,74 @@
             // Здесь можно добавить логику создания новой комнаты
         });
 
+        // Переменные для хранения информации о выбранной комнате
+        let currentRoomId = null;
+        let currentRoomTitle = null;
+
         // Обработка кликов по комнатам
         document.getElementById('room-list').addEventListener('click', function(e) {
             const roomCard = e.target.closest('.room-card');
             if (roomCard) {
-                const roomId = roomCard.getAttribute('data-room-id');
-                const roomTitle = roomCard.querySelector('.room-title').textContent;
+                currentRoomId = roomCard.getAttribute('data-room-id');
+                currentRoomTitle = roomCard.querySelector('.room-title').textContent.trim();
                 const isPasswordProtected = roomCard.querySelector('.password-protected') !== null;
                 
-                joinRoom(roomId, roomTitle, isPasswordProtected);
+                joinRoom(currentRoomId, currentRoomTitle, isPasswordProtected);
             }
         });
 
         // Функция входа в комнату
         function joinRoom(roomId, roomTitle, isPasswordProtected) {
             if (isPasswordProtected) {
-                // Запрашиваем пароль
-                const password = prompt(`Введите пароль для комнаты "${roomTitle}":`);
-                if (password === null) return; // Пользователь отменил ввод
-                
-                // В реальном приложении здесь будет проверка пароля на сервере
-                if (password === '1234') { // Пример пароля
-                    // Пароль верный, переходим в комнату
-                    window.location.href = `room.html?id=${roomId}&name=${encodeURIComponent(roomTitle)}&password=true`;
-                } else {
-                    alert('Неверный пароль!');
-                }
+                // Показываем модальное окно для ввода пароля
+                document.getElementById('room-name').textContent = roomTitle;
+                document.getElementById('password-modal').style.display = 'flex';
+                document.getElementById('password-input').focus();
             } else {
                 // Комната без пароля, просто переходим
                 window.location.href = `room.html?id=${roomId}&name=${encodeURIComponent(roomTitle)}&password=false`;
             }
         }
+
+        // Обработчики для модального окна
+        document.getElementById('connect-btn').addEventListener('click', function() {
+            const password = document.getElementById('password-input').value;
+            
+            if (password === '') {
+                alert('Пожалуйста, введите пароль!');
+                return;
+            }
+            
+            // В реальном приложении здесь будет проверка пароля на сервере
+            if (password === '1234') { // Пример пароля
+                // Пароль верный, переходим в комнату
+                window.location.href = `room.html?id=${currentRoomId}&name=${encodeURIComponent(currentRoomTitle)}&password=true`;
+            } else {
+                alert('Неверный пароль!');
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+            }
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', function() {
+            document.getElementById('password-modal').style.display = 'none';
+            document.getElementById('password-input').value = '';
+        });
+
+        // Закрытие модального окна при клике вне его
+        document.getElementById('password-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('password-modal').style.display = 'none';
+                document.getElementById('password-input').value = '';
+            }
+        });
+
+        // Обработка нажатия Enter в поле пароля
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('connect-btn').click();
+            }
+        });
     </script>
 </body>
 </html>
