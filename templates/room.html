@@ -454,18 +454,10 @@
                         <h3 class="section-title">Информация о викторине</h3>
                         
                         <div class="quiz-info">
-                            <div class="quiz-stats">
-                                <div class="stat">
-                                    <div class="stat-value" id="questions-count">10</div>
-                                    <div class="stat-label">вопросов</div>
-                                </div>
+                            <div class="quiz-stats">      
                                 <div class="stat">
                                     <div class="stat-value" id="time-limit">30</div>
                                     <div class="stat-label">секунд на ответ</div>
-                                </div>
-                                <div class="stat">
-                                    <div class="stat-value" id="difficulty">Средняя</div>
-                                    <div class="stat-label">сложность</div>
                                 </div>
                             </div>
                             
@@ -473,7 +465,6 @@
                         </div>
                         
                         <button class="ready-btn ready-btn-not-ready" id="ready-btn">Не готов</button>
-                        <button class="start-quiz-btn" id="start-quiz-btn" disabled>Начать викторину</button>
                     </div>
                 </div>
             </div>
@@ -591,21 +582,7 @@
             // Устанавливаем данные комнаты
             document.getElementById('room-name').textContent = currentRoom.name || 'Название комнаты';
             
-            // Эмулируем данные викторины, так как их нет в API
-            document.getElementById('questions-count').textContent = currentRoom.questionCount || 10;
             document.getElementById('time-limit').textContent = currentRoom.timeLimit || 30;
-            
-            
-            
-            // Устанавливаем иконку пароля
-            const roomIcon = document.getElementById('room-icon');
-            if (currentRoom.password) {
-                roomIcon.classList.add('password-protected');
-                roomIcon.textContent = '🔒';
-            } else {
-                roomIcon.classList.add('no-password');
-                roomIcon.textContent = '🔓';
-            }
             
             // Устанавливаем статус комнаты
             const roomStatus = document.getElementById('room-status');
@@ -616,12 +593,6 @@
         // Загрузка списка участников (эмуляция)
         async function loadParticipants() {
             try {
-                // Эмуляция участников, так как эндпоинта нет
-                const mockParticipants = [
-                    { username: currentUser, isOwner: true, isReady: isReady },
-                    { username: 'Участник2', isOwner: false, isReady: false },
-                    { username: 'Участник3', isOwner: false, isReady: true }
-                ];
                 displayParticipants(mockParticipants);
                 
             } catch (error) {

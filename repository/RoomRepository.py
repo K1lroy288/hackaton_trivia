@@ -44,7 +44,8 @@ class RoomRepository:
     def findById(self, room_id: int):
         try:
             with Session(self.engine) as session:
-                stmt = session.get(Room, room_id)
+                stmt = select(Room).where(Room.id == room_id)
+                
                 return session.scalar(stmt)
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error fetching room {id}: {e}')
@@ -191,3 +192,12 @@ class RoomRepository:
                 session.commit()
         except SQLAlchemyError as e:
             RuntimeError(f'Error update room: {e}')
+            
+    def getParticipants(self, room_id: int):
+        try:
+            with Session(self.engine) as session:
+                room = session.get(Room, room_id)
+                participants = room.participants_assoc
+                return participants
+        except SQLAlchemyError as e:
+            RuntimeError(f'Error of get participants of room {room_id}: {e}')

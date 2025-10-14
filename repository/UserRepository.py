@@ -46,5 +46,13 @@ class UserRepository:
                 return user
         except SQLAlchemyError as e:
             raise RuntimeError(f"DB error: {e}")
+        
+    def getUserById(self, user_id: int):
+        try:
+            with Session(self.engine) as session:
+                stmt = select(User).where(User.id == user_id)
+                return session.scalar(stmt)
+        except SQLAlchemyError as e:
+            RuntimeError(f'Error of get user {user_id}: {e}')
             
                     
