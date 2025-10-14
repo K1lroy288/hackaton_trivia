@@ -126,6 +126,11 @@
             color: #f39c12;
         }
         
+        .status-waiting {
+            background-color: #fff4e6;
+            color: #f39c12;
+        }
+        
         .room-description {
             color: #666;
             margin-bottom: 25px;
@@ -190,6 +195,7 @@
         .participant-name {
             font-weight: 500;
             color: #333;
+            flex: 1;
         }
         
         .participant-owner {
@@ -203,7 +209,24 @@
             font-size: 12px;
             padding: 2px 8px;
             border-radius: 10px;
-            margin-left: auto;
+            margin-right: 10px;
+        }
+        
+        .ready-status {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .ready-true {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .ready-false {
+            background-color: #e74c3c;
+            color: white;
         }
         
         .quiz-info {
@@ -259,6 +282,33 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        
+        .ready-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .ready-btn-ready {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .ready-btn-not-ready {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .ready-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .password-icon {
@@ -349,6 +399,13 @@
             margin-bottom: 20px;
             text-align: center;
         }
+        
+        .ready-count {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 16px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -385,7 +442,8 @@
                 <div class="room-content">
                     <!-- Секция участников -->
                     <div class="participants-section">
-                        <h3 class="section-title">Участники (<span id="participants-count">0</span>/<span id="max-participants">0</span>)</h3>
+                        <h3 class="section-title">Участники (<span id="participants-count">0</span>)</h3>
+                        <div class="ready-count" id="ready-count">Готовы: 0/0</div>
                         <ul class="participants-list" id="participants-list">
                             <!-- Список участников будет заполняться динамически -->
                         </ul>
@@ -414,6 +472,7 @@
                             <p id="quiz-theme">Тема викторины: Общие знания</p>
                         </div>
                         
+                        <button class="ready-btn ready-btn-not-ready" id="ready-btn">Не готов</button>
                         <button class="start-quiz-btn" id="start-quiz-btn" disabled>Начать викторину</button>
                     </div>
                 </div>
@@ -445,6 +504,8 @@
         let currentUser = null;
         let currentRoom = null;
         let isOwner = false;
+        let isReady = false;
+        let pollInterval = null;
         
         // Инициализация страницы
         document.addEventListener('DOMContentLoaded', function() {
@@ -463,14 +524,17 @@
             
             // Назначаем обработчики событий
             document.getElementById('back-btn').addEventListener('click', function() {
+                leaveRoom();
                 window.location.href = 'rooms.html';
             });
             
             document.getElementById('logout-btn').addEventListener('click', function() {
+                leaveRoom();
                 localStorage.removeItem('currentUser');
                 window.location.href = 'index.html';
             });
             
+            document.getElementById('ready-btn').addEventListener('click', toggleReady);
             document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
             
             // Обработчики для модального окна пароля
@@ -480,6 +544,9 @@
             });
             
             document.getElementById('submit-password').addEventListener('click', checkPassword);
+            
+            // Запускаем опрос состояния комнаты
+            startPolling();
         });
         
         // Загрузка данных комнаты
@@ -493,6 +560,12 @@
                 const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
                 
                 if (!response.ok) {
+                    if (response.status === 404) {
+                        // Комната удалена
+                        alert('Комната была удалена');
+                        window.location.href = 'rooms.html';
+                        return;
+                    }
                     throw new Error('Комната не найдена');
                 }
                 
@@ -524,7 +597,6 @@
             document.getElementById('time-limit').textContent = currentRoom.timeLimit;
             document.getElementById('difficulty').textContent = getDifficultyText(currentRoom.difficulty);
             document.getElementById('quiz-theme').textContent = `Тема викторины: ${currentRoom.theme}`;
-            document.getElementById('max-participants').textContent = currentRoom.maxParticipants;
             
             // Устанавливаем иконку пароля
             const roomIcon = document.getElementById('room-icon');
@@ -540,11 +612,6 @@
             const roomStatus = document.getElementById('room-status');
             roomStatus.textContent = getStatusText(currentRoom.status);
             roomStatus.className = 'room-status ' + getStatusClass(currentRoom.status);
-            
-            // Активируем кнопку начала викторины для владельца комнаты
-            if (isOwner && currentRoom.status === 'open') {
-                document.getElementById('start-quiz-btn').disabled = false;
-            }
         }
         
         // Загрузка списка участников
@@ -575,6 +642,25 @@
             // Проверяем, является ли текущий пользователь владельцем
             isOwner = participants.some(p => p.username === currentUser && p.isOwner);
             
+            // Считаем готовых участников
+            const readyCount = participants.filter(p => p.isReady).length;
+            const totalCount = participants.length;
+            document.getElementById('ready-count').textContent = `Готовы: ${readyCount}/${totalCount}`;
+            
+            // Проверяем готовность текущего пользователя
+            const currentParticipant = participants.find(p => p.username === currentUser);
+            if (currentParticipant) {
+                isReady = currentParticipant.isReady;
+                updateReadyButton();
+            }
+            
+            // Активируем кнопку начала викторины если все готовы и пользователь владелец
+            if (isOwner && readyCount === totalCount && totalCount > 0) {
+                document.getElementById('start-quiz-btn').disabled = false;
+            } else {
+                document.getElementById('start-quiz-btn').disabled = true;
+            }
+            
             // Отображаем участников
             participants.forEach(participant => {
                 const li = document.createElement('li');
@@ -590,10 +676,58 @@
                     <div class="participant-avatar">${firstLetter}</div>
                     <div class="participant-name">${participant.username}</div>
                     ${participant.isOwner ? '<div class="owner-badge">Создатель</div>' : ''}
+                    <div class="ready-status ${participant.isReady ? 'ready-true' : 'ready-false'}">
+                        ${participant.isReady ? 'Готов' : 'Не готов'}
+                    </div>
                 `;
                 
                 participantsList.appendChild(li);
             });
+        }
+        
+        // Переключение готовности
+        async function toggleReady() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/ready`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser,
+                        isReady: !isReady
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка изменения готовности');
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    isReady = !isReady;
+                    updateReadyButton();
+                    await loadParticipants(); // Обновляем список участников
+                } else {
+                    alert('Не удалось изменить готовность: ' + result.message);
+                }
+                
+            } catch (error) {
+                alert('Ошибка изменения готовности: ' + error.message);
+            }
+        }
+        
+        // Обновление кнопки готовности
+        function updateReadyButton() {
+            const readyBtn = document.getElementById('ready-btn');
+            if (isReady) {
+                readyBtn.textContent = 'Готов';
+                readyBtn.className = 'ready-btn ready-btn-ready';
+            } else {
+                readyBtn.textContent = 'Не готов';
+                readyBtn.className = 'ready-btn ready-btn-not-ready';
+            }
         }
         
         // Начало викторины
@@ -629,6 +763,23 @@
                 
             } catch (error) {
                 alert('Ошибка начала викторины: ' + error.message);
+            }
+        }
+        
+        // Выход из комнаты
+        async function leaveRoom() {
+            try {
+                await fetch(`${API_BASE_URL}/rooms/${roomId}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: currentUser
+                    })
+                });
+            } catch (error) {
+                console.error('Ошибка выхода из комнаты:', error);
             }
         }
         
@@ -675,6 +826,33 @@
             }
         }
         
+        // Запуск опроса состояния комнаты
+        function startPolling() {
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
+                    if (response.ok) {
+                        const roomData = await response.json();
+                        await loadParticipants();
+                        
+                        // Проверяем, не удалена ли комната
+                        if (roomData.status === 'deleted') {
+                            clearInterval(pollInterval);
+                            alert('Комната была удалена');
+                            window.location.href = 'rooms.html';
+                        }
+                    } else if (response.status === 404) {
+                        // Комната удалена
+                        clearInterval(pollInterval);
+                        alert('Комната была удалена');
+                        window.location.href = 'rooms.html';
+                    }
+                } catch (error) {
+                    console.error('Ошибка опроса комнаты:', error);
+                }
+            }, 2000); // Опрос каждые 2 секунды
+        }
+        
         // Показать сообщение об ошибке
         function showError(message) {
             document.getElementById('loading-message').style.display = 'none';
@@ -688,6 +866,7 @@
                 case 'open': return 'Открыта';
                 case 'full': return 'Полная';
                 case 'playing': return 'Идет игра';
+                case 'waiting': return 'Ожидание готовности';
                 default: return 'Неизвестно';
             }
         }
@@ -697,6 +876,7 @@
                 case 'open': return 'status-open';
                 case 'full': return 'status-full';
                 case 'playing': return 'status-playing';
+                case 'waiting': return 'status-waiting';
                 default: return 'status-open';
             }
         }
@@ -709,6 +889,9 @@
                 default: return 'Средняя';
             }
         }
+        
+        // Очистка при закрытии страницы
+        window.addEventListener('beforeunload', leaveRoom);
     </script>
 </body>
 </html>
