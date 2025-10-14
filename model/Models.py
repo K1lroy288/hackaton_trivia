@@ -87,7 +87,8 @@ class Room(Base):
     def to_dict(self):
         return {
             'id': self.id,
-            'roomname': self.name,
+            'name': self.name,
+            'password': self.password,
             'is_running': self.is_running,
             'created_at': self.created_at.isoformat(),
         }
