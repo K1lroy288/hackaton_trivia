@@ -261,6 +261,21 @@
         .cancel-btn:hover {
             background: #d0d0d0;
         }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #e74c3c;
+            padding: 20px;
+            background: #ffeaea;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -280,61 +295,7 @@
             <button class="create-room-btn" id="create-room-btn">Создать новую комнату</button>
             
             <div class="room-list" id="room-list">
-                <div class="room-card" data-room-id="1">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon no-password">🔓</span>
-                            Общая викторина #1
-                        </div>
-                        <div class="room-description">Тест на общие знания для всех желающих</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 4/8</span>
-                        <span class="room-status status-open">Открыта</span>
-                    </div>
-                </div>
-                
-                <div class="room-card" data-room-id="2">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon no-password">🔓</span>
-                            География мира
-                        </div>
-                        <div class="room-description">Проверьте свои знания географии</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 8/8</span>
-                        <span class="room-status status-full">Полная</span>
-                    </div>
-                </div>
-                
-                <div class="room-card" data-room-id="3">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon password-protected">🔒</span>
-                            Исторический баттл
-                        </div>
-                        <div class="room-description">Соревнование по истории для эрудитов</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 6/6</span>
-                        <span class="room-status status-playing">Идет игра</span>
-                    </div>
-                </div>
-                
-                <div class="room-card" data-room-id="4">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon password-protected">🔒</span>
-                            Кино и сериалы
-                        </div>
-                        <div class="room-description">Угадай фильм по кадру и актера по фото</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 3/10</span>
-                        <span class="room-status status-open">Открыта</span>
-                    </div>
-                </div>
+                <div class="loading" id="loading-message">Загрузка комнат...</div>
             </div>
         </div>
     </div>
@@ -353,6 +314,9 @@
     </div>
 
     <script>
+        // Базовый URL для API (замените на ваш реальный URL)
+        const API_BASE_URL = 'http://localhost:8000';
+        
         // Проверяем авторизацию при загрузке страницы
         window.addEventListener('DOMContentLoaded', function() {
             const savedUser = localStorage.getItem('currentUser');
@@ -364,6 +328,9 @@
             
             // Устанавливаем имя пользователя
             document.getElementById('username-display').textContent = savedUser;
+            
+            // Загружаем список комнат
+            loadRooms();
         });
 
         // Кнопка выхода
@@ -381,6 +348,91 @@
         // Переменные для хранения информации о выбранной комнате
         let currentRoomId = null;
         let currentRoomTitle = null;
+
+        // Функция загрузки комнат с сервера
+        async function loadRooms() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/room`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const rooms = await response.json();
+                displayRooms(rooms);
+            } catch (error) {
+                console.error('Ошибка при загрузке комнат:', error);
+                showError('Не удалось загрузить список комнат. Попробуйте обновить страницу.');
+            }
+        }
+
+        // Функция отображения комнат
+        function displayRooms(rooms) {
+            const roomList = document.getElementById('room-list');
+            
+            if (!rooms || rooms.length === 0) {
+                roomList.innerHTML = '<div class="loading">Нет доступных комнат</div>';
+                return;
+            }
+            
+            roomList.innerHTML = '';
+            
+            rooms.forEach(room => {
+                const roomCard = createRoomCard(room);
+                roomList.appendChild(roomCard);
+            });
+        }
+
+        // Функция создания карточки комнаты
+        function createRoomCard(room) {
+            const roomCard = document.createElement('div');
+            roomCard.className = 'room-card';
+            roomCard.setAttribute('data-room-id', room.id);
+            
+            // Определяем статус комнаты
+            const currentPlayers = room.current_players || 0;
+            const maxPlayers = room.max_players || 8;
+            const isPlaying = room.status === 'playing';
+            const isFull = currentPlayers >= maxPlayers;
+            
+            let statusClass = 'status-open';
+            let statusText = 'Открыта';
+            
+            if (isPlaying) {
+                statusClass = 'status-playing';
+                statusText = 'Идет игра';
+            } else if (isFull) {
+                statusClass = 'status-full';
+                statusText = 'Полная';
+            }
+            
+            // Определяем иконку пароля
+            const hasPassword = room.has_password || false;
+            const passwordIcon = hasPassword ? '🔒' : '🔓';
+            const passwordClass = hasPassword ? 'password-protected' : 'no-password';
+            
+            roomCard.innerHTML = `
+                <div class="room-info">
+                    <div class="room-title">
+                        <span class="password-icon ${passwordClass}">${passwordIcon}</span>
+                        ${room.name || 'Без названия'}
+                    </div>
+                    <div class="room-description">${room.description || 'Описание отсутствует'}</div>
+                </div>
+                <div class="room-stats">
+                    <span>👥 ${currentPlayers}/${maxPlayers}</span>
+                    <span class="room-status ${statusClass}">${statusText}</span>
+                </div>
+            `;
+            
+            return roomCard;
+        }
+
+        // Функция показа ошибки
+        function showError(message) {
+            const roomList = document.getElementById('room-list');
+            roomList.innerHTML = `<div class="error-message">${message}</div>`;
+        }
 
         // Обработка кликов по комнатам
         document.getElementById('room-list').addEventListener('click', function(e) {
@@ -417,7 +469,8 @@
             }
             
             // В реальном приложении здесь будет проверка пароля на сервере
-            if (password === '1234') { // Пример пароля
+            // Временно используем пример пароля
+            if (password === '1234') {
                 // Пароль верный, переходим в комнату
                 window.location.href = `room.html?id=${currentRoomId}&name=${encodeURIComponent(currentRoomTitle)}&password=true`;
             } else {
