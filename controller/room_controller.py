@@ -5,9 +5,12 @@ from typing import Optional
 from model.Models import Room, User
 from fastapi import WebSocket, WebSocketDisconnect
 from webSocketManager.manager import manager
+from service.GameService import GameService
+from fastapi import BackgroundTasks
 
 router = APIRouter()
 room_service = RoomService()
+game_service = GameService()
 
 class JoinRequest(BaseModel):
     userid: int
@@ -15,7 +18,9 @@ class JoinRequest(BaseModel):
 
 class RoomCreateRequest(BaseModel):
     name: str
+    userid: int
     password: Optional[str]
+
 
 @router.get("/api/v1/room")
 def controller_get_all_rooms():
@@ -62,6 +67,7 @@ def controller_create_room(data: RoomCreateRequest):
     try:
         room = Room(name=data.name, password=data.password)
         created_room = room_service.create_room(room)
+        room_service.add_participant(data.userid, True)
         return created_room.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -100,7 +106,7 @@ def controller_delete_room_by_id(room_id: int):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.websocket("/ws/room/{room_id}")
-async def websoсket_room(websocket: WebSocket , room_id: int):
+async def web_soсket_room(websocket: WebSocket , room_id: int):
     await manager.connect(room_id, websocket)
     try:
         while True:
@@ -112,3 +118,20 @@ async def websoсket_room(websocket: WebSocket , room_id: int):
             })
     except WebSocketDisconnect:
         manager.disconnect(room_id, websocket)
+
+@router.post("/api/v1/room/{room_id}/start")
+async def start_game(room_id: int):
+    import asyncio
+    asyncio.create_task(game_service.start_game(room_id))
+    return {"status": "game started"}
+
+@router.get("/api/v1/room/{room_id}/participants")
+def controller_get_count_participants(room_id: int):
+    try:
+        users = room_service.getCountParticipants(room_id)
+        return users
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
