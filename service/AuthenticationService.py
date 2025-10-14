@@ -1,4 +1,3 @@
-from repository.RoomRepository import RoomRepository
 from repository.UserRepository import UserRepository
 from model.Models import User
 import bcrypt
@@ -30,11 +29,3 @@ class AuthenticationService:
             raise ValueError("Wrong password")
 
         return  user_from_db
-
-class RoomService:
-    def __init__(self):
-        self.room_repository = RoomRepository()
-
-    def get_all_rooms(self):
-        rooms = self.room_repository.findAll()
-        return rooms
