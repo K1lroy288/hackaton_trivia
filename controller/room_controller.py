@@ -11,7 +11,6 @@ class JoinRequest(BaseModel):
     userid: int
     room_password: str
 
-
 class RoomCreateRequest(BaseModel):
     name: str
     password: Optional[str]
