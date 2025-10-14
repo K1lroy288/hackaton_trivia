@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Викторина</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .user-info {
+            color: white;
+            font-weight: 500;
+            font-size: 18px;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 16px;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .logo {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .logo span {
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .quiz-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .quiz-info {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2575fc;
+        }
+        
+        .info-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .question-section {
+            margin-bottom: 30px;
+        }
+        
+        .question-text {
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .answer-btn {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .answer-btn:hover {
+            background-color: #e9ecef;
+            border-color: #2575fc;
+        }
+        
+        .answer-btn.selected {
+            background-color: #2575fc;
+            color: white;
+            border-color: #2575fc;
+        }
+        
+        .answer-btn.correct {
+            background-color: #2ecc71;
+            color: white;
+            border-color: #2ecc71;
+        }
+        
+        .answer-btn.incorrect {
+            background-color: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+        
+        .answer-btn:disabled {
+            cursor: not-allowed;
+        }
+        
+        .timer-section {
+            margin-bottom: 20px;
+        }
+        
+        .timer-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .timer-progress {
+            height: 100%;
+            background: linear-gradient(to right, #2ecc71, #f39c12, #e74c3c);
+            transition: width 1s linear;
+        }
+        
+        .timer-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .status-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .status-message {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .participants-status {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .participant-status {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .participant-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+        
+        .participant-status.answered .participant-avatar {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+        }
+        
+        .leaderboard {
+            width: 100%;
+            margin-top: 30px;
+        }
+        
+        .leaderboard-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .leaderboard-list {
+            list-style-type: none;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .leaderboard-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .leaderboard-position {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+        
+        .leaderboard-name {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+        
+        .leaderboard-score {
+            font-weight: 600;
+            color: #2575fc;
+        }
+        
+        .current-user {
+            background-color: #e8f4fd;
+            border-left: 3px solid #2575fc;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error-message {
+            background-color: #ffeaea;
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .results-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .score-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2575fc;
+            margin-bottom: 20px;
+        }
+        
+        .cool-down-section {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .cool-down-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .cool-down-timer {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2575fc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка с информацией пользователя -->
+        <div class="header-bar">
+            <div class="user-info" id="user-info">Добро пожаловать, <span id="username-display"></span>!</div>
+            <button class="back-btn" id="back-btn">Назад к комнате</button>
+        </div>
+        
+        <div class="logo">Викторина<span>Онлайн</span></div>
+        
+        <!-- Основной контент викторины -->
+        <div class="card">
+            <div id="loading-message" class="loading">Загрузка викторины...</div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
+            
+            <div id="quiz-content" style="display: none;">
+                <div class="quiz-header">
+                    <div class="quiz-title">Викторина</div>
+                    <div class="quiz-info">
+                        <div class="info-item">
+                            <div class="info-value" id="question-number">1/10</div>
+                            <div class="info-label">вопрос</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-value" id="score">0</div>
+                            <div class="info-label">очков</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-section" id="status-section">
+                    <div class="status-message" id="status-message">Ожидание начала вопроса...</div>
+                    <div class="participants-status" id="participants-status">
+                        <!-- Статусы участников будут заполняться динамически -->
+                    </div>
+                </div>
+                
+                <div class="timer-section" id="timer-section">
+                    <div class="timer-bar">
+                        <div class="timer-progress" id="timer-progress" style="width: 100%"></div>
+                    </div>
+                    <div class="timer-text">Осталось времени: <span id="timer-text">30</span> сек.</div>
+                </div>
+                
+                <div class="question-section" id="question-section">
+                    <div class="question-text" id="question-text">Текст вопроса будет здесь</div>
+                    <div class="answers-grid" id="answers-grid">
+                        <!-- Варианты ответов будут заполняться динамически -->
+                    </div>
+                </div>
+                
+                <div class="cool-down-section" id="cool-down-section" style="display: none;">
+                    <div class="cool-down-text">Следующий вопрос через:</div>
+                    <div class="cool-down-timer" id="cool-down-timer">5</div>
+                </div>
+                
+                <div class="results-section" id="results-section" style="display: none;">
+                    <div class="score-display">Ваш результат: <span id="final-score">0</span> очков</div>
+                    
+                    <div class="leaderboard">
+                        <h3 class="leaderboard-title">Топ игроков</h3>
+                        <ul class="leaderboard-list" id="leaderboard-list">
+                            <!-- Список лидеров будет заполняться динамически -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API адрес
+        const API_BASE_URL = 'http://localhost:3425';
+        
+        // Получаем параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('roomId');
+        
+        // Текущий пользователь и состояние викторины
+        let currentUser = null;
+        let currentUserId = null;
+        let currentQuestion = null;
+        let selectedAnswer = null;
+        let score = 0;
+        let questionCount = 0;
+        let currentQuestionIndex = 0;
+        let timer = null;
+        let coolDownTimer = null;
+        let timeLeft = 30;
+        let totalTime = 30;
+        let coolDownTime = 5;
+        let coolDownLeft = 5;
+        
+        // Эмуляция данных участников и их статусов
+        let participants = [];
+        let answeredParticipants = [];
+        let leaderboard = [];
+        
+        // Инициализация страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем авторизацию
+            const savedUser = localStorage.getItem('currentUser');
+            if (!savedUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            currentUser = savedUser;
+            currentUserId = localStorage.getItem('currentUserId') || 1; // Заглушка
+            document.getElementById('username-display').textContent = currentUser;
+            
+            // Назначаем обработчики событий
+            document.getElementById('back-btn').addEventListener('click', function() {
+                if (roomId) {
+                    window.location.href = `room.html?id=${roomId}`;
+                } else {
+                    window.location.href = 'rooms.html';
+                }
+            });
+            
+            // Инициализируем участников (эмуляция)
+            initializeParticipants();
+            
+            // Начинаем викторину
+            startQuiz();
+        });
+        
+        // Инициализация участников (эмуляция)
+        function initializeParticipants() {
+            // Эмулируем участников викторины
+            participants = [
+                { id: currentUserId, username: currentUser, score: 0, answered: false },
+                { id: 2, username: 'Участник2', score: 0, answered: false },
+                { id: 3, username: 'Участник3', score: 0, answered: false },
+                { id: 4, username: 'Участник4', score: 0, answered: false }
+            ];
+            
+            updateParticipantsStatus();
+        }
+        
+        // Обновление статусов участников
+        function updateParticipantsStatus() {
+            const participantsStatus = document.getElementById('participants-status');
+            participantsStatus.innerHTML = '';
+            
+            participants.forEach(participant => {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'participant-status';
+                if (participant.answered) {
+                    statusDiv.classList.add('answered');
+                }
+                
+                const firstLetter = participant.username.charAt(0).toUpperCase();
+                
+                statusDiv.innerHTML = `
+                    <div class="participant-avatar">${firstLetter}</div>
+                    <div>${participant.username}</div>
+                `;
+                
+                participantsStatus.appendChild(statusDiv);
+            });
+        }
+        
+        // Начало викторины
+        async function startQuiz() {
+            try {
+                // Устанавливаем количество вопросов (эмуляция)
+                questionCount = 10;
+                
+                // Показываем контент викторины
+                document.getElementById('loading-message').style.display = 'none';
+                document.getElementById('quiz-content').style.display = 'block';
+                
+                // Загружаем первый вопрос
+                await loadQuestion();
+                
+            } catch (error) {
+                showError('Ошибка загрузки викторины: ' + error.message);
+            }
+        }
+        
+        // Загрузка вопроса
+        async function loadQuestion() {
+            try {
+                // Сбрасываем состояние
+                selectedAnswer = null;
+                answeredParticipants = [];
+                updateParticipantsStatus();
+                
+                // Показываем секцию вопроса и скрываем кулдаун
+                document.getElementById('question-section').style.display = 'block';
+                document.getElementById('cool-down-section').style.display = 'none';
+                document.getElementById('results-section').style.display = 'none';
+                
+                // Обновляем счетчик вопросов
+                updateQuestionCounter();
+                
+                // Получаем случайный вопрос из API
+                const response = await fetch(`${API_BASE_URL}/api/v1/trivia/question`);
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки вопроса');
+                }
+                
+                currentQuestion = await response.json();
+                displayQuestion();
+                
+                // Обновляем статус
+                document.getElementById('status-message').textContent = 'Выберите правильный ответ';
+                
+                // Запускаем таймер
+                startTimer();
+                
+                // Эмуляция ответов других участников
+                simulateOtherParticipants();
+                
+            } catch (error) {
+                throw new Error('Ошибка загрузки вопроса: ' + error.message);
+            }
+        }
+        
+        // Отображение вопроса
+        function displayQuestion() {
+            document.getElementById('question-text').textContent = currentQuestion.question;
+            
+            const answersGrid = document.getElementById('answers-grid');
+            answersGrid.innerHTML = '';
+            
+            // Создаем кнопки для каждого варианта ответа
+            currentQuestion.answers.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn';
+                button.textContent = answer;
+                button.dataset.index = index;
+                
+                button.addEventListener('click', function() {
+                    // Можно нажать только один раз
+                    if (selectedAnswer !== null) return;
+                    
+                    // Снимаем выделение с предыдущего выбора (если есть)
+                    document.querySelectorAll('.answer-btn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Выделяем текущий выбор
+                    button.classList.add('selected');
+                    selectedAnswer = index;
+                    
+                    // Отмечаем, что текущий пользователь ответил
+                    markParticipantAnswered(currentUserId);
+                    
+                    // Отправляем ответ (эмуляция)
+                    submitAnswer();
+                });
+                
+                answersGrid.appendChild(button);
+            });
+        }
+        
+        // Отметить участника как ответившего
+        function markParticipantAnswered(userId) {
+            const participant = participants.find(p => p.id === userId);
+            if (participant) {
+                participant.answered = true;
+                answeredParticipants.push(userId);
+                updateParticipantsStatus();
+            }
+        }
+        
+        // Эмуляция ответов других участников
+        function simulateOtherParticipants() {
+            // Через случайные промежутки времени другие участники "отвечают"
+            participants.forEach(participant => {
+                if (participant.id !== currentUserId) {
+                    const randomTime = Math.floor(Math.random() * 20) + 5; // 5-25 секунд
+                    setTimeout(() => {
+                        if (selectedAnswer !== null) { // Только если текущий пользователь еще не ответил
+                            markParticipantAnswered(participant.id);
+                        }
+                    }, randomTime * 1000);
+                }
+            });
+        }
+        
+        // Запуск таймера
+        function startTimer() {
+            timeLeft = totalTime;
+            updateTimer();
+            
+            if (timer) {
+                clearInterval(timer);
+            }
+            
+            timer = setInterval(function() {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    // Время вышло, показываем правильный ответ
+                    showCorrectAnswer();
+                    // Запускаем кулдаун
+                    startCoolDown();
+                }
+            }, 1000);
+        }
+        
+        // Обновление таймера
+        function updateTimer() {
+            const progress = (timeLeft / totalTime) * 100;
+            document.getElementById('timer-progress').style.width = `${progress}%`;
+            document.getElementById('timer-text').textContent = timeLeft;
+        }
+        
+        // Обновление счетчика вопросов
+        function updateQuestionCounter() {
+            document.getElementById('question-number').textContent = `${currentQuestionIndex + 1}/${questionCount}`;
+        }
+        
+        // Отправка ответа
+        function submitAnswer() {
+            // Отключаем все кнопки ответов
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Обновляем статус
+            document.getElementById('status-message').textContent = 'Ожидание других участников...';
+            
+            // Останавливаем таймер, если все ответили
+            if (answeredParticipants.length === participants.length) {
+                clearInterval(timer);
+                showCorrectAnswer();
+                startCoolDown();
+            }
+        }
+        
+        // Показать правильный ответ
+        function showCorrectAnswer() {
+            const answerButtons = document.querySelectorAll('.answer-btn');
+            
+            // Подсвечиваем правильный ответ зеленым
+            answerButtons[currentQuestion.correct_answer].classList.add('correct');
+            
+            // Если ответ неверный, подсвечиваем неправильный ответ красным
+            if (selectedAnswer !== null && selectedAnswer !== currentQuestion.correct_answer) {
+                answerButtons[selectedAnswer].classList.add('incorrect');
+            }
+            
+            // Обновляем очки, если ответ правильный
+            if (selectedAnswer === currentQuestion.correct_answer) {
+                score += 10;
+                document.getElementById('score').textContent = score;
+                
+                // Обновляем очки текущего пользователя
+                const currentParticipant = participants.find(p => p.id === currentUserId);
+                if (currentParticipant) {
+                    currentParticipant.score = score;
+                }
+            }
+            
+            // Обновляем статус
+            document.getElementById('status-message').textContent = 'Правильный ответ выделен зеленым';
+        }
+        
+        // Запуск кулдауна
+        function startCoolDown() {
+            coolDownLeft = coolDownTime;
+            document.getElementById('cool-down-timer').textContent = coolDownLeft;
+            
+            // Показываем секцию кулдауна
+            document.getElementById('question-section').style.display = 'none';
+            document.getElementById('cool-down-section').style.display = 'block';
+            
+            if (coolDownTimer) {
+                clearInterval(coolDownTimer);
+            }
+            
+            coolDownTimer = setInterval(function() {
+                coolDownLeft--;
+                document.getElementById('cool-down-timer').textContent = coolDownLeft;
+                
+                if (coolDownLeft <= 0) {
+                    clearInterval(coolDownTimer);
+                    // Переходим к следующему вопросу
+                    loadNextQuestion();
+                }
+            }, 1000);
+        }
+        
+        // Загрузка следующего вопроса
+        function loadNextQuestion() {
+            currentQuestionIndex++;
+            
+            // Сбрасываем статусы участников
+            participants.forEach(p => p.answered = false);
+            
+            if (currentQuestionIndex < questionCount) {
+                loadQuestion();
+            } else {
+                // Викторина завершена
+                finishQuiz();
+            }
+        }
+        
+        // Завершение викторины
+        function finishQuiz() {
+            document.getElementById('quiz-content').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('final-score').textContent = score;
+            
+            // Загружаем таблицу лидеров
+            loadLeaderboard();
+        }
+        
+        // Загрузка таблицы лидеров
+        function loadLeaderboard() {
+            // Сортируем участников по убыванию очков
+            leaderboard = [...participants].sort((a, b) => b.score - a.score);
+            
+            // Отображаем таблицу лидеров
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+            
+            leaderboard.forEach((user, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                if (user.id == currentUserId) {
+                    li.classList.add('current-user');
+                }
+                
+                li.innerHTML = `
+                    <div class="leaderboard-position">${index + 1}</div>
+                    <div class="leaderboard-name">${user.username}</div>
+                    <div class="leaderboard-score">${user.score} очков</div>
+                `;
+                
+                leaderboardList.appendChild(li);
+            });
+        }
+        
+        // Показать сообщение об ошибке
+        function showError(message) {
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-message').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
