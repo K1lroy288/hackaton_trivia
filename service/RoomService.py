@@ -42,3 +42,6 @@ class RoomService:
             return bool_password
         else:
             return bool_password
+
+    def delete_room(self, room_id: int):
+        self.room_repository.deleteRoom(room_id)

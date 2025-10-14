@@ -34,6 +34,10 @@ async def index(request: Request):
 async def index(request: Request):
     return templates.TemplateResponse("rooms.html", {"request": request})
 
+@app.get("/room.html")
+async def index(request: Request):
+    return templates.TemplateResponse("room.html", {"request": request})
+
 # Глобальный обработчик ошибок (опционально, но полезно)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -48,9 +52,8 @@ if __name__ == "__main__":
     from repository.QuestionRepository import QuestionRepository
     questionRepository = QuestionRepository()
     running = True
-    print(questionRepository.questionCountInDB())
     
-    """ while(running):
-        running = questionRepository.addQustionsFromOpenTriviaDB() """
+    while(running):
+        running = questionRepository.addQustionsFromOpenTriviaDB()
     import uvicorn
     uvicorn.run("main:app", host = settings.SERVER_HOST, port = int(settings.SERVER_PORT), reload = True)
