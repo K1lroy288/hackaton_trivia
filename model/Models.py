@@ -55,6 +55,8 @@ class Room(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=True)
     is_running: Mapped[bool] = mapped_column(Boolean, default=False)
+    max_players: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="WAITING")
     created_at: Mapped[datetime] = mapped_column(
         DateTime, 
         default=datetime.utcnow,
@@ -66,6 +68,7 @@ class Room(Base):
         back_populates='rooms',
     )
     
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -73,10 +76,12 @@ class Room(Base):
             'is_running': self.is_running,
             'created_at': self.created_at.isoformat(),
             'participants': [user.to_dict() for user in self.participants],
+            'max_players': self.max_players,
+            'status': self.status,
         }
     
     def __repr__(self) -> str:
-        return f'Room(id={self.id!r}, roomname={self.name!r}, participants={self.participants!r}, created_at={self.created_at!r}, is_running={self.is_running}, password={self.password})'
+        return f'Room(id={self.id!r}, roomname={self.name!r}, participants={self.participants!r}, created_at={self.created_at!r}, is_running={self.is_running}, password={self.password}, max_players={self.max_players}, status={self.status})'
     
 class Question(Base):
     __tablename__ = 'questions'
@@ -97,3 +102,15 @@ class Question(Base):
             'category': self.category,
             'difficulty': self.difficulty,
         }
+
+class RoomParticipant(Base):
+    __tablename__ = 'room_participants'
+    
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id'), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    
+    is_ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    room: Mapped["Room"] = relationship(back_populates="participants_assoc")
+    user: Mapped["User"] = relationship(back_populates="rooms_assoc")

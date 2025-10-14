@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from model.Models import User, Room, Base
+from model.Models import User, Room, Base, RoomParticipant
 from config.config import Settings
 import bcrypt
 
@@ -158,3 +158,16 @@ class RoomRepository:
                 return True
         except SQLAlchemyError as e:
             raise RuntimeError(f'Failed to fetch password of room {room_id}: {e}')
+    
+    def are_all_participants_ready(self, room_id: int) -> bool:
+        with Session(self.engine) as session:
+            total = session.scalar(
+                select(func.count()).select_from(RoomParticipant)
+                .where(RoomParticipant.room_id == room_id)
+            )
+            ready = session.scalar(
+                select(func.count()).select_from(RoomParticipant)
+                .where(RoomParticipant.room_id == room_id)
+                .where(RoomParticipant.is_ready == True)
+            )
+            return total == ready and total >= 2
