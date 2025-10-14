@@ -103,6 +103,13 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .divider {
             height: 1px;
             background-color: #eee;
@@ -161,6 +168,11 @@
             -webkit-text-fill-color: transparent;
             color: transparent;
         }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -183,7 +195,7 @@
                     <div class="error-message" id="login-password-error"></div>
                 </div>
                 
-                <button type="submit">Войти</button>
+                <button type="submit" id="login-btn">Войти</button>
                 
                 <div class="divider"></div>
                 
@@ -216,7 +228,7 @@
                     <div class="error-message" id="register-confirm-error"></div>
                 </div>
                 
-                <button type="submit">Зарегистрироваться</button>
+                <button type="submit" id="register-btn">Зарегистрироваться</button>
                 
                 <div class="divider"></div>
                 
@@ -229,6 +241,9 @@
     </div>
 
     <script>
+        // Базовый URL для API (замените на ваш реальный URL)
+        const API_BASE_URL = 'http://localhost:8000';
+        
         // Текущий пользователь
         let currentUser = null;
 
@@ -236,11 +251,13 @@
         document.getElementById('show-register').addEventListener('click', function() {
             document.getElementById('login-card').classList.add('hidden');
             document.getElementById('register-card').classList.remove('hidden');
+            resetErrorMessages('register');
         });
         
         document.getElementById('show-login').addEventListener('click', function() {
             document.getElementById('register-card').classList.add('hidden');
             document.getElementById('login-card').classList.remove('hidden');
+            resetErrorMessages('login');
         });
 
         // Обработка формы регистрации
@@ -251,6 +268,7 @@
             const username = document.getElementById('register-username').value;
             const password = document.getElementById('register-password').value;
             const confirmPassword = document.getElementById('register-confirm-password').value;
+            const registerBtn = document.getElementById('register-btn');
             
             let isValid = true;
             
@@ -270,24 +288,36 @@
             }
             
             if (isValid) {
-                // Имитация успешной регистрации
-                simulateApiCall('register', username, password)
+                // Блокируем кнопку и показываем состояние загрузки
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Регистрация...';
+                document.getElementById('register-card').classList.add('loading');
+                
+                // Реальный API вызов
+                registerUser(username, password)
                     .then(response => {
-                        if (response.success) {
-                            showSuccessMessage('Регистрация прошла успешно! Теперь войдите в аккаунт.');
-                            // Очищаем форму регистрации
-                            document.getElementById('register-form').reset();
-                            // Переходим на форму входа после успешной регистрации
-                            setTimeout(() => {
-                                document.getElementById('register-card').classList.add('hidden');
-                                document.getElementById('login-card').classList.remove('hidden');
-                            }, 1500);
-                        } else {
-                            showError('register-username-error', 'Ошибка регистрации. Возможно, такой логин уже существует.');
-                        }
+                        showSuccessMessage('Регистрация прошла успешно! Теперь войдите в аккаунт.');
+                        // Очищаем форму регистрации
+                        document.getElementById('register-form').reset();
+                        // Переходим на форму входа после успешной регистрации
+                        setTimeout(() => {
+                            document.getElementById('register-card').classList.add('hidden');
+                            document.getElementById('login-card').classList.remove('hidden');
+                            resetErrorMessages('login');
+                        }, 1500);
                     })
                     .catch(error => {
-                        showError('register-username-error', 'Ошибка соединения с сервером');
+                        if (error.message.includes('400')) {
+                            showError('register-username-error', 'Ошибка регистрации. Возможно, такой логин уже существует.');
+                        } else {
+                            showError('register-username-error', 'Ошибка соединения с сервером');
+                        }
+                    })
+                    .finally(() => {
+                        // Восстанавливаем кнопку
+                        registerBtn.disabled = false;
+                        registerBtn.textContent = 'Зарегистрироваться';
+                        document.getElementById('register-card').classList.remove('loading');
                     });
             }
         });
@@ -299,6 +329,7 @@
             
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
+            const loginBtn = document.getElementById('login-btn');
             
             let isValid = true;
             
@@ -313,40 +344,75 @@
             }
             
             if (isValid) {
-                // Имитация успешного входа
-                simulateApiCall('login', username, password)
+                // Блокируем кнопку и показываем состояние загрузки
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Вход...';
+                document.getElementById('login-card').classList.add('loading');
+                
+                // Реальный API вызов
+                loginUser(username, password)
                     .then(response => {
-                        if (response.success) {
-                            showSuccessMessage('Вход выполнен успешно!');
-                            currentUser = username;
-                            localStorage.setItem('currentUser', username);
-                            setTimeout(() => {
-                                // Переход на страницу комнат после успешного входа
-                                window.location.href = 'rooms.html';
-                            }, 1500);
-                        } else {
-                            showError('login-username-error', 'Неверный логин или пароль');
-                        }
+                        showSuccessMessage('Вход выполнен успешно!');
+                        currentUser = username;
+                        localStorage.setItem('currentUser', username);
+                        setTimeout(() => {
+                            // Переход на страницу комнат после успешного входа
+                            window.location.href = 'rooms.html';
+                        }, 1500);
                     })
                     .catch(error => {
-                        showError('login-username-error', 'Ошибка соединения с сервером');
+                        if (error.message.includes('400')) {
+                            showError('login-username-error', 'Неверный логин или пароль');
+                        } else {
+                            showError('login-username-error', 'Ошибка соединения с сервером');
+                        }
+                    })
+                    .finally(() => {
+                        // Восстанавливаем кнопку
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'Войти';
+                        document.getElementById('login-card').classList.remove('loading');
                     });
             }
         });
 
-        // Имитация API-запроса
-        function simulateApiCall(endpoint, username, password) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // В реальном приложении здесь будет fetch запрос
-                    // Для демонстрации всегда возвращаем успех
-                    resolve({
-                        success: true,
-                        message: `${endpoint === 'login' ? 'Вход' : 'Регистрация'} выполнен успешно`,
-                        user: username
-                    });
-                }, 1000);
+        // Реальные API функции
+        async function registerUser(username, password) {
+            const response = await fetch(`${API_BASE_URL}/api/v1/trivia/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
             });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+
+        async function loginUser(username, password) {
+            const response = await fetch(`${API_BASE_URL}/api/v1/trivia/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return await response.json();
         }
 
         // Вспомогательные функции
