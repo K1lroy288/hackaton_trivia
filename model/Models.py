@@ -1,12 +1,14 @@
 from typing import Set
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, DateTime, Table, Column, ForeignKey, Boolean
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Boolean, Text, Table, Column
 from datetime import datetime
 from enum import Enum as PyEnum
+import json
 
 class Base(DeclarativeBase):
     pass
 
+# Ассоциативная таблица для ролей (оставляем, если используешь)
 user_role_table = Table(
     'user_role',
     Base.metadata,
@@ -14,12 +16,7 @@ user_role_table = Table(
     Column('role', String(50), primary_key=True),
 )
 
-room_participants = Table(
-    'room_participants',
-    Base.metadata,
-    Column('room_id', ForeignKey('rooms.id', ondelete='CASCADE'), primary_key=True),
-    Column('user_id', ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
-)
+# УДАЛЕНО: room_participants как Table — теперь это модель RoomParticipant
 
 class Role(PyEnum):
     USER = "USER"
@@ -36,10 +33,15 @@ class User(Base):
         nullable=False,
     )
     
-    rooms: Mapped[Set["Room"]] = relationship(
-        secondary=room_participants,
-        back_populates="participants",
+    # Связь через модель RoomParticipant
+    rooms_assoc: Mapped[Set["RoomParticipant"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
+    
+    @property
+    def rooms(self) -> Set["Room"]:
+        return {rp.room for rp in self.rooms_assoc}
     
     def to_dict(self):
         return {
@@ -47,6 +49,18 @@ class User(Base):
             "username": self.username,
             "created_at": self.created_at.isoformat(),
         }
+
+class RoomParticipant(Base):
+    __tablename__ = 'room_participants'
+    
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id'), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    
+    is_ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    room: Mapped["Room"] = relationship(back_populates="participants_assoc")
+    user: Mapped["User"] = relationship(back_populates="rooms_assoc")
 
 class Room(Base):
     __tablename__ = 'rooms'
@@ -61,10 +75,14 @@ class Room(Base):
         nullable=False,
     )
     
-    participants: Mapped[Set['User']] = relationship(
-        secondary=room_participants,
-        back_populates='rooms',
+    participants_assoc: Mapped[Set["RoomParticipant"]] = relationship(
+        back_populates="room",
+        cascade="all, delete-orphan"
     )
+    
+    @property
+    def participants(self) -> Set[User]:
+        return {rp.user for rp in self.participants_assoc}
     
     def to_dict(self):
         return {
@@ -72,28 +90,29 @@ class Room(Base):
             'roomname': self.name,
             'is_running': self.is_running,
             'created_at': self.created_at.isoformat(),
-            'participants': [user.to_dict() for user in self.participants],
         }
     
     def __repr__(self) -> str:
-        return f'Room(id={self.id!r}, roomname={self.name!r}, participants={self.participants!r}, created_at={self.created_at!r}, is_running={self.is_running}, password={self.password})'
-    
+        return (f'Room(id={self.id!r}, roomname={self.name!r}, '
+                f'participants={len(self.participants)!r}, created_at={self.created_at!r}, '
+                f'is_running={self.is_running}, password={"***" if self.password else None},')
+
 class Question(Base):
     __tablename__ = 'questions'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    question: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    correct_answer: Mapped[str] = mapped_column(String, nullable=False)
-    incorrect_answers: Mapped[str] = mapped_column(String, nullable=False)
-    category: Mapped[str] = mapped_column(String, nullable=True)
-    difficulty: Mapped[str] = mapped_column(String, nullable=True)
+    question: Mapped[str] = mapped_column(Text, nullable=False)  # ← исправлено: было 'question'
+    correct_answer: Mapped[str] = mapped_column(String(255), nullable=False)
+    incorrect_answers: Mapped[str] = mapped_column(Text, nullable=False)  # JSON list
+    category: Mapped[str] = mapped_column(String(100), nullable=True)
+    difficulty: Mapped[str] = mapped_column(String(20), nullable=True)
 
     def to_dict(self):
         return {
             'id': self.id,
-            'text': self.text,
+            'question': self.question,
             'correct_answer': self.correct_answer,
-            'options': self.options,
+            'options': [self.correct_answer] + json.loads(self.incorrect_answers),
             'category': self.category,
             'difficulty': self.difficulty,
         }

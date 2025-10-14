@@ -133,12 +133,9 @@
         .room-title {
             font-weight: 600;
             color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .room-description {
-            color: #666;
-            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .room-stats {
@@ -172,18 +169,10 @@
         
         .password-icon {
             font-size: 16px;
-            margin-right: 8px;
-        }
-
-        .password-protected {
             color: #e74c3c;
         }
-
-        .no-password {
-            color: #2ecc71;
-        }
         
-        /* Стили для модального окна с паролем */
+        /* Стили для модальных окон */
         .modal {
             display: none;
             position: fixed;
@@ -261,6 +250,46 @@
         .cancel-btn:hover {
             background: #d0d0d0;
         }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #e74c3c;
+            padding: 20px;
+            background: #ffeaea;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        /* Стили для формы создания комнаты */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -280,61 +309,7 @@
             <button class="create-room-btn" id="create-room-btn">Создать новую комнату</button>
             
             <div class="room-list" id="room-list">
-                <div class="room-card" data-room-id="1">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon no-password">🔓</span>
-                            Общая викторина #1
-                        </div>
-                        <div class="room-description">Тест на общие знания для всех желающих</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 4/8</span>
-                        <span class="room-status status-open">Открыта</span>
-                    </div>
-                </div>
-                
-                <div class="room-card" data-room-id="2">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon no-password">🔓</span>
-                            География мира
-                        </div>
-                        <div class="room-description">Проверьте свои знания географии</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 8/8</span>
-                        <span class="room-status status-full">Полная</span>
-                    </div>
-                </div>
-                
-                <div class="room-card" data-room-id="3">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon password-protected">🔒</span>
-                            Исторический баттл
-                        </div>
-                        <div class="room-description">Соревнование по истории для эрудитов</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 6/6</span>
-                        <span class="room-status status-playing">Идет игра</span>
-                    </div>
-                </div>
-                
-                <div class="room-card" data-room-id="4">
-                    <div class="room-info">
-                        <div class="room-title">
-                            <span class="password-icon password-protected">🔒</span>
-                            Кино и сериалы
-                        </div>
-                        <div class="room-description">Угадай фильм по кадру и актера по фото</div>
-                    </div>
-                    <div class="room-stats">
-                        <span>👥 3/10</span>
-                        <span class="room-status status-open">Открыта</span>
-                    </div>
-                </div>
+                <div class="loading" id="loading-message">Загрузка комнат...</div>
             </div>
         </div>
     </div>
@@ -352,7 +327,31 @@
         </div>
     </div>
 
+    <!-- Модальное окно для создания комнаты -->
+    <div class="modal" id="create-room-modal">
+        <div class="modal-content">
+            <div class="modal-title">Создание новой комнаты</div>
+            <form id="create-room-form">
+                <div class="form-group">
+                    <label for="room-name-input">Название комнаты</label>
+                    <input type="text" id="room-name-input" placeholder="Введите название комнаты" required>
+                </div>
+                <div class="form-group">
+                    <label for="room-password-input">Пароль (необязательно)</label>
+                    <input type="password" id="room-password-input" placeholder="Введите пароль для комнаты">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="connect-btn">Создать комнату</button>
+                    <button type="button" class="cancel-btn" id="cancel-create-btn">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // Базовый URL для API (замените на ваш реальный URL)
+        const API_BASE_URL = 'http://localhost:3425';
+        
         // Проверяем авторизацию при загрузке страницы
         window.addEventListener('DOMContentLoaded', function() {
             const savedUser = localStorage.getItem('currentUser');
@@ -364,31 +363,182 @@
             
             // Устанавливаем имя пользователя
             document.getElementById('username-display').textContent = savedUser;
+            
+            // Загружаем список комнат
+            loadRooms();
         });
 
         // Кнопка выхода
         document.getElementById('logout-btn').addEventListener('click', function() {
             localStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
+            window.location.href = '/';
         });
 
-        // Создание комнаты
+        // Создание комнаты - открытие модального окна
         document.getElementById('create-room-btn').addEventListener('click', function() {
-            alert('Функция создания комнаты будет реализована позже!');
-            // Здесь можно добавить логику создания новой комнаты
+            document.getElementById('create-room-modal').style.display = 'flex';
+            document.getElementById('room-name-input').focus();
+        });
+
+        // Отмена создания комнаты
+        document.getElementById('cancel-create-btn').addEventListener('click', function() {
+            document.getElementById('create-room-modal').style.display = 'none';
+            document.getElementById('create-room-form').reset();
+        });
+
+        // Закрытие модального окна создания комнаты при клике вне его
+        document.getElementById('create-room-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('create-room-modal').style.display = 'none';
+                document.getElementById('create-room-form').reset();
+            }
+        });
+
+        // Обработка формы создания комнаты
+        document.getElementById('create-room-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const roomName = document.getElementById('room-name-input').value;
+            const password = document.getElementById('room-password-input').value;
+            
+            if (!roomName.trim()) {
+                alert('Пожалуйста, введите название комнаты');
+                return;
+            }
+            
+            try {
+                const createBtn = document.querySelector('#create-room-form .connect-btn');
+                createBtn.disabled = true;
+                createBtn.textContent = 'Создание...';
+                
+                const roomData = {
+                    name: roomName,
+                    password: password || null
+                };
+                
+                // API вызов для создания комнаты
+                const response = await fetch(`${API_BASE_URL}/api/v1/room`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(roomData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const newRoom = await response.json();
+                
+                // Закрываем модальное окно и обновляем список комнат
+                document.getElementById('create-room-modal').style.display = 'none';
+                document.getElementById('create-room-form').reset();
+                
+                alert('Комната успешно создана!');
+                loadRooms(); // Перезагружаем список комнат
+                
+            } catch (error) {
+                console.error('Ошибка при создании комнаты:', error);
+                alert('Ошибка при создании комнаты. Попробуйте снова.');
+            } finally {
+                const createBtn = document.querySelector('#create-room-form .connect-btn');
+                createBtn.disabled = false;
+                createBtn.textContent = 'Создать комнату';
+            }
         });
 
         // Переменные для хранения информации о выбранной комнате
         let currentRoomId = null;
         let currentRoomTitle = null;
 
+        // Функция загрузки комнат с сервера
+        async function loadRooms() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/room`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const rooms = await response.json();
+                displayRooms(rooms);
+            } catch (error) {
+                console.error('Ошибка при загрузке комнат:', error);
+                showError('Не удалось загрузить список комнат. Попробуйте обновить страницу.');
+            }
+        }
+
+        // Функция отображения комнат
+        function displayRooms(rooms) {
+            const roomList = document.getElementById('room-list');
+            
+            if (!rooms || rooms.length === 0) {
+                roomList.innerHTML = '<div class="loading">Нет доступных комнат</div>';
+                return;
+            }
+            
+            roomList.innerHTML = '';
+            
+            rooms.forEach(room => {
+                const roomCard = createRoomCard(room);
+                roomList.appendChild(roomCard);
+            });
+        }
+
+        // Функция создания карточки комнаты
+        function createRoomCard(room) {
+            const roomCard = document.createElement('div');
+            roomCard.className = 'room-card';
+            roomCard.setAttribute('data-room-id', room.id);
+            
+            // Определяем статус комнаты
+            const currentPlayers = room.current_players || 0;
+            const isPlaying = room.status === 'playing';
+            
+            let statusClass = 'status-open';
+            let statusText = 'Открыта';
+            
+            if (isPlaying) {
+                statusClass = 'status-playing';
+                statusText = 'Идет игра';
+            }
+            
+            // Определяем иконку пароля - показываем только если есть пароль
+            const hasPassword = room.has_password || false;
+            const passwordIcon = hasPassword ? '🔒' : '';
+            
+            roomCard.innerHTML = `
+                <div class="room-info">
+                    <div class="room-title">
+                        ${hasPassword ? `<span class="password-icon">${passwordIcon}</span>` : ''}
+                        ${room.name || 'Без названия'}
+                    </div>
+                </div>
+                <div class="room-stats">
+                    <span>👥 ${currentPlayers}</span>
+                    <span class="room-status ${statusClass}">${statusText}</span>
+                </div>
+            `;
+            
+            return roomCard;
+        }
+
+        // Функция показа ошибки
+        function showError(message) {
+            const roomList = document.getElementById('room-list');
+            roomList.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
         // Обработка кликов по комнатам
         document.getElementById('room-list').addEventListener('click', function(e) {
             const roomCard = e.target.closest('.room-card');
             if (roomCard) {
                 currentRoomId = roomCard.getAttribute('data-room-id');
-                currentRoomTitle = roomCard.querySelector('.room-title').textContent.trim();
-                const isPasswordProtected = roomCard.querySelector('.password-protected') !== null;
+                const roomTitleElement = roomCard.querySelector('.room-title');
+                // Убираем иконку замка из текста названия комнаты
+                currentRoomTitle = roomTitleElement.textContent.trim();
+                const isPasswordProtected = roomCard.querySelector('.password-icon') !== null;
                 
                 joinRoom(currentRoomId, currentRoomTitle, isPasswordProtected);
             }
@@ -417,7 +567,8 @@
             }
             
             // В реальном приложении здесь будет проверка пароля на сервере
-            if (password === '1234') { // Пример пароля
+            // Временно используем пример пароля
+            if (password === '1234') {
                 // Пароль верный, переходим в комнату
                 window.location.href = `room.html?id=${currentRoomId}&name=${encodeURIComponent(currentRoomTitle)}&password=true`;
             } else {
