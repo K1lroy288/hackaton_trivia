@@ -7,9 +7,10 @@ from model.Models import Room, User
 router = APIRouter()
 room_service = RoomService()
 
-class UserRoomRequest(BaseModel):
-    username: str
+class JoinRequest(BaseModel):
     userid: int
+    room_password: str
+
 
 class RoomCreateRequest(BaseModel):
     name: str
@@ -45,15 +46,9 @@ def controller_change_running(room_id: int):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.patch("/api/v1/room/{room_id}/join")
-def controller_add_participant(data: UserRoomRequest, room_data: RoomCreateRequest, room_id: int = Path(..., gt=0)):
+def controller_add_participant(data: JoinRequest, room_id: int = Path(..., gt=0)):
     try:
-        user = User(
-            username=data.username,
-            id=data.userid,
-        )
-        bool_password = room_service.verify_room_password(room_id, room_data.password)
-        if bool_password:
-            room_service.add_participant(room_id, user)
+        room_service.verify_room_password(room_id, data.userid, data.password)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except RuntimeError as e:

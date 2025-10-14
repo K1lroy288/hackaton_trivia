@@ -19,8 +19,9 @@ class RoomService:
     def change_running(self, room_id: int):
         self.room_repository.changeRunning(room_id)
 
-    def add_participant(self, room_id: int, user: User):
-        self.room_repository.addParticipant(room_id, user)
+    def add_participant(self, room_id: int, user_id: int, room_pass: str):
+        if self.verify_room_password(room_id, room_pass):
+            self.room_repository.addParticipant(room_id, user_id)
 
     def create_room(self, room: Room):
         new_room = self.room_repository.createRoom(room)
@@ -40,4 +41,4 @@ class RoomService:
         if bool_password:
             return bool_password
         else:
-            return not bool_password
+            return bool_password
