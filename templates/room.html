@@ -494,7 +494,7 @@
 
     <script>
         // API адрес
-        const API_BASE_URL = 'flag_for_address';
+        const API_BASE_URL = 'http://localhost:3425'; // Замените на ваш адрес
         
         // Получаем параметры из URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -502,6 +502,7 @@
         
         // Текущий пользователь и комната
         let currentUser = null;
+        let currentUserId = null; // Нужно получить ID пользователя
         let currentRoom = null;
         let isOwner = false;
         let isReady = false;
@@ -517,6 +518,8 @@
             }
             
             currentUser = savedUser;
+            // TODO: Нужно получить ID пользователя из localStorage или другого места
+            currentUserId = localStorage.getItem('currentUserId') || 1; // Заглушка
             document.getElementById('username-display').textContent = currentUser;
             
             // Загружаем данные комнаты
@@ -531,6 +534,7 @@
             document.getElementById('logout-btn').addEventListener('click', function() {
                 leaveRoom();
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('currentUserId');
                 window.location.href = 'index.html';
             });
             
@@ -557,12 +561,11 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}`);
                 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        // Комната удалена
-                        alert('Комната была удалена');
+                        alert('Комната не найдена');
                         window.location.href = 'rooms.html';
                         return;
                     }
@@ -572,13 +575,8 @@
                 currentRoom = await response.json();
                 displayRoomData();
                 
-                // Загружаем участников
+                // Загружаем участников (эмуляция, так как эндпоинта нет)
                 await loadParticipants();
-                
-                // Проверяем, нужен ли пароль
-                if (currentRoom.isPasswordProtected && !currentRoom.joined) {
-                    document.getElementById('password-modal').style.display = 'flex';
-                }
                 
             } catch (error) {
                 showError('Ошибка загрузки данных комнаты: ' + error.message);
@@ -591,16 +589,17 @@
             document.getElementById('room-content').style.display = 'block';
             
             // Устанавливаем данные комнаты
-            document.getElementById('room-name').textContent = currentRoom.name;
-            document.getElementById('room-description').textContent = currentRoom.description;
-            document.getElementById('questions-count').textContent = currentRoom.questionCount;
-            document.getElementById('time-limit').textContent = currentRoom.timeLimit;
-            document.getElementById('difficulty').textContent = getDifficultyText(currentRoom.difficulty);
-            document.getElementById('quiz-theme').textContent = `Тема викторины: ${currentRoom.theme}`;
+            document.getElementById('room-name').textContent = currentRoom.name || 'Название комнаты';
+            
+            // Эмулируем данные викторины, так как их нет в API
+            document.getElementById('questions-count').textContent = currentRoom.questionCount || 10;
+            document.getElementById('time-limit').textContent = currentRoom.timeLimit || 30;
+            
+            
             
             // Устанавливаем иконку пароля
             const roomIcon = document.getElementById('room-icon');
-            if (currentRoom.isPasswordProtected) {
+            if (currentRoom.password) {
                 roomIcon.classList.add('password-protected');
                 roomIcon.textContent = '🔒';
             } else {
@@ -614,17 +613,16 @@
             roomStatus.className = 'room-status ' + getStatusClass(currentRoom.status);
         }
         
-        // Загрузка списка участников
+        // Загрузка списка участников (эмуляция)
         async function loadParticipants() {
             try {
-                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/participants`);
-                
-                if (!response.ok) {
-                    throw new Error('Ошибка загрузки участников');
-                }
-                
-                const participants = await response.json();
-                displayParticipants(participants);
+                // Эмуляция участников, так как эндпоинта нет
+                const mockParticipants = [
+                    { username: currentUser, isOwner: true, isReady: isReady },
+                    { username: 'Участник2', isOwner: false, isReady: false },
+                    { username: 'Участник3', isOwner: false, isReady: true }
+                ];
+                displayParticipants(mockParticipants);
                 
             } catch (error) {
                 console.error('Ошибка загрузки участников:', error);
@@ -685,33 +683,15 @@
             });
         }
         
-        // Переключение готовности
+        // Переключение готовности (эмуляция)
         async function toggleReady() {
             try {
-                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/ready`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: currentUser,
-                        isReady: !isReady
-                    })
-                });
+                // Эмуляция, так как эндпоинта нет
+                isReady = !isReady;
+                updateReadyButton();
                 
-                if (!response.ok) {
-                    throw new Error('Ошибка изменения готовности');
-                }
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    isReady = !isReady;
-                    updateReadyButton();
-                    await loadParticipants(); // Обновляем список участников
-                } else {
-                    alert('Не удалось изменить готовность: ' + result.message);
-                }
+                // Обновляем список участников
+                await loadParticipants();
                 
             } catch (error) {
                 alert('Ошибка изменения готовности: ' + error.message);
@@ -738,28 +718,17 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/start`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: currentUser
-                    })
+                // Используем существующий эндпоинт для начала викторины
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}`, {
+                    method: 'PATCH'
                 });
                 
                 if (!response.ok) {
                     throw new Error('Ошибка начала викторины');
                 }
                 
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Переходим на страницу викторины
-                    window.location.href = `quiz.html?roomId=${roomId}`;
-                } else {
-                    alert('Не удалось начать викторину: ' + result.message);
-                }
+                // Переходим на страницу викторины
+                window.location.href = `quiz.html?roomId=${roomId}`;
                 
             } catch (error) {
                 alert('Ошибка начала викторины: ' + error.message);
@@ -769,14 +738,9 @@
         // Выход из комнаты
         async function leaveRoom() {
             try {
-                await fetch(`${API_BASE_URL}/rooms/${roomId}/leave`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: currentUser
-                    })
+                // Используем существующий эндпоинт для выхода
+                await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/${currentUserId}`, {
+                    method: 'DELETE'
                 });
             } catch (error) {
                 console.error('Ошибка выхода из комнаты:', error);
@@ -794,35 +758,32 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/join`, {
-                    method: 'POST',
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/join`, {
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username: currentUser,
-                        password: password
+                        userid: currentUserId,
+                        room_password: password
                     })
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Ошибка входа в комнату');
+                    if (response.status === 404) {
+                        throw new Error('Комната не найдена');
+                    }
+                    throw new Error('Неверный пароль или ошибка входа');
                 }
                 
-                const result = await response.json();
-                
-                if (result.success) {
-                    document.getElementById('password-modal').style.display = 'none';
-                    // Обновляем данные комнаты
-                    await loadRoomData();
-                } else {
-                    alert('Неверный пароль!');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
+                document.getElementById('password-modal').style.display = 'none';
+                // Обновляем данные комнаты
+                await loadRoomData();
                 
             } catch (error) {
                 alert('Ошибка входа в комнату: ' + error.message);
+                passwordInput.value = '';
+                passwordInput.focus();
             }
         }
         
@@ -830,12 +791,10 @@
         function startPolling() {
             pollInterval = setInterval(async () => {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/rooms/${roomId}`);
+                    const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}`);
                     if (response.ok) {
                         const roomData = await response.json();
-                        await loadParticipants();
-                        
-                        // Проверяем, не удалена ли комната
+                        // Обновляем данные если комната изменилась
                         if (roomData.status === 'deleted') {
                             clearInterval(pollInterval);
                             alert('Комната была удалена');
@@ -850,7 +809,7 @@
                 } catch (error) {
                     console.error('Ошибка опроса комнаты:', error);
                 }
-            }, 2000); // Опрос каждые 2 секунды
+            }, 5000); // Опрос каждые 5 секунд
         }
         
         // Показать сообщение об ошибке
@@ -867,7 +826,7 @@
                 case 'full': return 'Полная';
                 case 'playing': return 'Идет игра';
                 case 'waiting': return 'Ожидание готовности';
-                default: return 'Неизвестно';
+                default: return 'Открыта';
             }
         }
         
