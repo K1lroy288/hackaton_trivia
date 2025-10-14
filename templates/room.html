@@ -590,13 +590,25 @@
             roomStatus.className = 'room-status ' + getStatusClass(currentRoom.status);
         }
         
-        // Загрузка списка участников (эмуляция)
         async function loadParticipants() {
+            if (!roomId) {
+                console.warn('Room ID not found in URL');
+                return;
+            }
+
             try {
-                displayParticipants(mockParticipants);
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/participants`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const participants = await response.json();
+                displayParticipants(participants);
                 
             } catch (error) {
                 console.error('Ошибка загрузки участников:', error);
+                showErrorInParticipantsList('Не удалось загрузить участников');
             }
         }
         
@@ -822,6 +834,13 @@
         
         // Очистка при закрытии страницы
         window.addEventListener('beforeunload', leaveRoom);
+
+        function showErrorInParticipantsList(message) {
+            const participantsList = document.getElementById('participants-list');
+            if (participantsList) {
+                participantsList.innerHTML = `<div class="error-message" style="margin-top: 10px;">${message}</div>`;
+            }
+        }
     </script>
 </body>
 </html>
