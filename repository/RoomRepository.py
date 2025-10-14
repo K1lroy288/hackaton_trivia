@@ -159,28 +159,28 @@ class RoomRepository:
         except SQLAlchemyError as e:
             raise RuntimeError(f'Failed to fetch password of room {room_id}: {e}')
     
-def are_all_participants_ready(self, room_id: int) -> bool:
+    def are_all_participants_ready(self, room_id: int) -> bool:
+            try:
+                with Session(self.engine) as session:
+                    total = session.scalar(
+                        select(func.count()).select_from(RoomParticipant)
+                        .where(RoomParticipant.room_id == room_id)
+                    ) or 0
+                    ready = session.scalar(
+                        select(func.count()).select_from(RoomParticipant)
+                        .where(RoomParticipant.room_id == room_id)
+                        .where(RoomParticipant.is_ready == True)
+                    ) or 0
+                    return total >= 2 and total == ready
+            except SQLAlchemyError as e:
+                raise RuntimeError(f'Error checking readiness in room {room_id}: {e}')
+            
+    def deleteRoom(self, room_id):
         try:
             with Session(self.engine) as session:
-                total = session.scalar(
-                    select(func.count()).select_from(RoomParticipant)
-                    .where(RoomParticipant.room_id == room_id)
-                ) or 0
-                ready = session.scalar(
-                    select(func.count()).select_from(RoomParticipant)
-                    .where(RoomParticipant.room_id == room_id)
-                    .where(RoomParticipant.is_ready == True)
-                ) or 0
-                return total >= 2 and total == ready
+                room = session.get(Room, room_id)
+                session.delete(room)
+                session.commit()
         except SQLAlchemyError as e:
-            raise RuntimeError(f'Error checking readiness in room {room_id}: {e}')
-        
-def deleteRoom(self, room_id):
-    try:
-        with Session(self.engine) as session:
-            room = session.get(Room, room_id)
-            session.delete(room)
-            session.commit()
-    except SQLAlchemyError as e:
-        raise RuntimeError(f'Error of delete room {room_id}: {e}')
+            raise RuntimeError(f'Error of delete room {room_id}: {e}')
             
