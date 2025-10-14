@@ -45,13 +45,15 @@ def controller_change_running(room_id: int):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.patch("/api/v1/room/{room_id}/join")
-def controller_add_participant(data: UserRoomRequest, room_id: int = Path(..., gt=0)):
+def controller_add_participant(data: UserRoomRequest, room_data: RoomCreateRequest, room_id: int = Path(..., gt=0)):
     try:
         user = User(
             username=data.username,
             id=data.userid,
         )
-        room_service.add_participant(room_id, user)
+        bool_password = room_service.verify_room_password(room_id, room_data.password)
+        if bool_password:
+            room_service.add_participant(room_id, user)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except RuntimeError as e:

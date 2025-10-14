@@ -44,7 +44,7 @@ if __name__ == "__main__":
     from repository.QuestionRepository import QuestionRepository
     questionRepository = QuestionRepository()
     running = True
-    while(running):
+    while running:
         running = questionRepository.addQustionsFromOpenTriviaDB()
     
     import uvicorn

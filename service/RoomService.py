@@ -13,7 +13,7 @@ class RoomService:
     def get_room_by_id(self, room_id: int):
         room = self.room_repository.findById(room_id)
         if room is None:
-            raise RuntimeError(f'Room {room_id} not found')
+            raise ValueError(f'Room {room_id} not found')
         return room
 
     def change_running(self, room_id: int):
@@ -35,3 +35,9 @@ class RoomService:
     def remove_participant(self, room_id: int, user_id: int):
         self.room_repository.removeParticipant(room_id, user_id)
 
+    def verify_room_password(self, room_id: int, room_password: str):
+        bool_password = self.room_repository.verify_room_password(room_id, room_password)
+        if bool_password:
+            return bool_password
+        else:
+            return not bool_password
