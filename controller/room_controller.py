@@ -122,3 +122,13 @@ async def start_game(room_id: int):
     asyncio.create_task(game_service.start_game(room_id))
     return {"status": "game started"}
 
+@router.get("/api/v1/room/{room_id}/participants")
+def controller_get_count_participants(room_id: int):
+    try:
+        users = room_service.getCountParticipants(room_id)
+        return users
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
