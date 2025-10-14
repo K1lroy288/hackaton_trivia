@@ -167,8 +167,35 @@
     <div class="container">
         <div class="logo">Викторина<span>Онлайн</span></div>
         
-        <!-- Форма регистрации -->
-        <div class="card" id="register-card">
+        <!-- Форма входа (теперь показывается по умолчанию) -->
+        <div class="card" id="login-card">
+            <h1>Войти в аккаунт</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Логин</label>
+                    <input type="text" id="login-username" placeholder="Введите ваш логин" required>
+                    <div class="error-message" id="login-username-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Пароль</label>
+                    <input type="password" id="login-password" placeholder="Введите пароль" required>
+                    <div class="error-message" id="login-password-error"></div>
+                </div>
+                
+                <button type="submit">Войти</button>
+                
+                <div class="divider"></div>
+                
+                <div class="switch-form">
+                    Нет аккаунта? 
+                    <a class="switch-link" id="show-register">Зарегистрироваться</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Форма регистрации (теперь скрыта по умолчанию) -->
+        <div class="card hidden" id="register-card">
             <h1>Создать аккаунт</h1>
             <form id="register-form">
                 <div class="form-group">
@@ -195,34 +222,7 @@
                 
                 <div class="switch-form">
                     Уже есть аккаунт? 
-                    <a class="switch-link" id="show-username">Войти</a>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Форма входа -->
-        <div class="card hidden" id="username-card">
-            <h1>Войти в аккаунт</h1>
-            <form id="username-form">
-                <div class="form-group">
-                    <label for="username-username">Логин</label>
-                    <input type="text" id="username-username" placeholder="Введите ваш логин" required>
-                    <div class="error-message" id="username-username-error"></div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="username-password">Пароль</label>
-                    <input type="password" id="username-password" placeholder="Введите пароль" required>
-                    <div class="error-message" id="username-password-error"></div>
-                </div>
-                
-                <button type="submit">Войти</button>
-                
-                <div class="divider"></div>
-                
-                <div class="switch-form">
-                    Нет аккаунта? 
-                    <a class="switch-link" id="show-register">Зарегистрироваться</a>
+                    <a class="switch-link" id="show-login">Войти</a>
                 </div>
             </form>
         </div>
@@ -233,14 +233,14 @@
         let currentUser = null;
 
         // Переключение между формами
-        document.getElementById('show-username').addEventListener('click', function() {
-            document.getElementById('register-card').classList.add('hidden');
-            document.getElementById('username-card').classList.remove('hidden');
+        document.getElementById('show-register').addEventListener('click', function() {
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('register-card').classList.remove('hidden');
         });
         
-        document.getElementById('show-register').addEventListener('click', function() {
-            document.getElementById('username-card').classList.add('hidden');
-            document.getElementById('register-card').classList.remove('hidden');
+        document.getElementById('show-login').addEventListener('click', function() {
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
         });
 
         // Обработка формы регистрации
@@ -274,12 +274,13 @@
                 simulateApiCall('register', username, password)
                     .then(response => {
                         if (response.success) {
-                            showSuccessMessage('Регистрация прошла успешно!');
-                            currentUser = username;
-                            localStorage.setItem('currentUser', username);
+                            showSuccessMessage('Регистрация прошла успешно! Теперь войдите в аккаунт.');
+                            // Очищаем форму регистрации
+                            document.getElementById('register-form').reset();
+                            // Переходим на форму входа после успешной регистрации
                             setTimeout(() => {
-                                // Переход на страницу комнат после успешной регистрации
-                                window.location.href = 'rooms.html';
+                                document.getElementById('register-card').classList.add('hidden');
+                                document.getElementById('login-card').classList.remove('hidden');
                             }, 1500);
                         } else {
                             showError('register-username-error', 'Ошибка регистрации. Возможно, такой логин уже существует.');
@@ -292,28 +293,28 @@
         });
         
         // Обработка формы входа
-        document.getElementById('username-form').addEventListener('submit', function(e) {
+        document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            resetErrorMessages('username');
+            resetErrorMessages('login');
             
-            const username = document.getElementById('username-username').value;
-            const password = document.getElementById('username-password').value;
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
             
             let isValid = true;
             
             if (username.length === 0) {
-                showError('username-username-error', 'Введите логин');
+                showError('login-username-error', 'Введите логин');
                 isValid = false;
             }
             
             if (password.length === 0) {
-                showError('username-password-error', 'Введите пароль');
+                showError('login-password-error', 'Введите пароль');
                 isValid = false;
             }
             
             if (isValid) {
                 // Имитация успешного входа
-                simulateApiCall('username', username, password)
+                simulateApiCall('login', username, password)
                     .then(response => {
                         if (response.success) {
                             showSuccessMessage('Вход выполнен успешно!');
@@ -324,11 +325,11 @@
                                 window.location.href = 'rooms.html';
                             }, 1500);
                         } else {
-                            showError('username-username-error', 'Неверный логин или пароль');
+                            showError('login-username-error', 'Неверный логин или пароль');
                         }
                     })
                     .catch(error => {
-                        showError('username-username-error', 'Ошибка соединения с сервером');
+                        showError('login-username-error', 'Ошибка соединения с сервером');
                     });
             }
         });
@@ -341,7 +342,7 @@
                     // Для демонстрации всегда возвращаем успех
                     resolve({
                         success: true,
-                        message: `${endpoint === 'username' ? 'Вход' : 'Регистрация'} выполнен успешно`,
+                        message: `${endpoint === 'login' ? 'Вход' : 'Регистрация'} выполнен успешно`,
                         user: username
                     });
                 }, 1000);
