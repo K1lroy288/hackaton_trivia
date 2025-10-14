@@ -26,8 +26,9 @@ class QuestionRepository:
     def createQuestion(self, question: Question):
         try:
             with Session(self.engine) as session:
-                existing = session.execute(select(Question).where(Question.text == question.text)).scalar_one_or_none()
+                existing = session.execute(select(Question).where(Question.question == question.question)).scalar_one_or_none()
                 if existing:
+                    return
                     raise ValueError('Question with this text already exist')                
                 
                 session.add(question)                
@@ -61,7 +62,8 @@ class QuestionRepository:
     
     def addQustionsFromOpenTriviaDB(self):
         openTriviaDBURL = "https://opentdb.com/api.php?amount=50&type=multiple"
-        questions = requests.get(openTriviaDBURL).json()
+        response = requests.get(openTriviaDBURL).json()
+        questions = response.get('results', [])
         for q in questions:
             questionJSON = Question(
                 difficulty=q['difficulty'],
@@ -72,7 +74,8 @@ class QuestionRepository:
             )
             self.createQuestion(questionJSON)
         
-        if self.questionCountInDB() < 1000:
+        if self.questionCountInDB() < 300:
             self.addQustionsFromOpenTriviaDB()
         
+        return False
     

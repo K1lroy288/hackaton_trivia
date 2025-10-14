@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from model.Models import User, Room, Base
 from config.config import Settings
+import bcrypt
 
 class RoomRepository:
     
@@ -146,12 +147,13 @@ class RoomRepository:
         это не апи функция, ты вызываешь ее при добавлении пользователя в комнату
         проверяешь пароль
     """
-    def verify_room_password(self, room_id: int):
+    def verify_room_password(self, room_id: int, room_password: str):
         try:
             with Session(self.engine) as session:
                 room = session.get(Room, room_id)
                 if not room.password:
-                    return None
-                return room.password
+                    return False
+                if not bcrypt.checkpw(room_password.encode('utf-8'), room.password.encode('utf-8')):
+                    raise ValueError("Wrong password")
         except SQLAlchemyError as e:
             raise RuntimeError(f'Failed to fetch password of room {room_id}: {e}')
