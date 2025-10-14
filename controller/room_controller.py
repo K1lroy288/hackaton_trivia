@@ -5,6 +5,7 @@ from typing import Optional
 from model.Models import Room, User
 from fastapi import WebSocket, WebSocketDisconnect
 from webSocketManager.manager import manager
+from service.GameService import GameService
 
 router = APIRouter()
 room_service = RoomService()
@@ -112,3 +113,9 @@ async def web_soсket_room(websocket: WebSocket , room_id: int):
             })
     except WebSocketDisconnect:
         manager.disconnect(room_id, websocket)
+
+@router.post("/api/v1/room/{room_id}/start")
+async def start_game(room_id: int):
+    import asyncio
+    asyncio.create_task(game_service.start_game(room_id))
+    return {"status": "game started"}
