@@ -6,9 +6,11 @@ from model.Models import Room, User
 from fastapi import WebSocket, WebSocketDisconnect
 from webSocketManager.manager import manager
 from service.GameService import GameService
+from fastapi import BackgroundTasks
 
 router = APIRouter()
 room_service = RoomService()
+game_service = GameService()
 
 class JoinRequest(BaseModel):
     userid: int
@@ -119,3 +121,4 @@ async def start_game(room_id: int):
     import asyncio
     asyncio.create_task(game_service.start_game(room_id))
     return {"status": "game started"}
+

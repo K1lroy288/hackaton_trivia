@@ -1,4 +1,5 @@
 from repository.RoomRepository import RoomRepository
+from repository.UserRepository import UserRepository
 from model.Models import Room
 from webSocketManager import manager
 from service.QuestionService import QuestionService
@@ -7,6 +8,7 @@ class RoomService:
     room_repository: RoomRepository
     def __init__(self):
         self.room_repository = RoomRepository()
+        self.user_repository = UserRepository()
 
     def get_all_rooms(self):
         rooms = self.room_repository.findAll()
@@ -47,3 +49,8 @@ class RoomService:
 
     def delete_room(self, room_id: int):
         self.room_repository.deleteRoom(room_id)
+
+    def getCountParticipants(self, room_id: int):
+        users_id = self.room_repository.getParticipants(room_id)
+        return [user.to_dict() for user in self.user_repository.getUserById(users_id)]
+
