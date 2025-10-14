@@ -82,9 +82,9 @@ class Question(Base):
     __tablename__ = 'questions'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    text: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    question: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     correct_answer: Mapped[str] = mapped_column(String, nullable=False)
-    options: Mapped[str] = mapped_column(String, nullable=False)
+    incorrect_answers: Mapped[str] = mapped_column(String, nullable=False)
     category: Mapped[str] = mapped_column(String, nullable=True)
     difficulty: Mapped[str] = mapped_column(String, nullable=True)
 

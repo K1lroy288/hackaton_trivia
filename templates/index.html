@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация и Вход</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            border-color: #2575fc;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(37, 117, 252, 0.2);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #5a0db5, #1c68e8);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 25px 0;
+        }
+        
+        .switch-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .switch-link {
+            color: #2575fc;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .switch-link:hover {
+            color: #6a11cb;
+            text-decoration: underline;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            color: #2ecc71;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .logo {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .logo span {
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">Викторина<span>Онлайн</span></div>
+        
+        <!-- Форма регистрации -->
+        <div class="card" id="register-card">
+            <h1>Создать аккаунт</h1>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">Логин</label>
+                    <input type="text" id="register-username" placeholder="Придумайте логин" required>
+                    <div class="error-message" id="register-username-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-password">Пароль</label>
+                    <input type="password" id="register-password" placeholder="Придумайте пароль" required>
+                    <div class="error-message" id="register-password-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="register-confirm-password">Подтвердите пароль</label>
+                    <input type="password" id="register-confirm-password" placeholder="Повторите пароль" required>
+                    <div class="error-message" id="register-confirm-error"></div>
+                </div>
+                
+                <button type="submit">Зарегистрироваться</button>
+                
+                <div class="divider"></div>
+                
+                <div class="switch-form">
+                    Уже есть аккаунт? 
+                    <a class="switch-link" id="show-username">Войти</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Форма входа -->
+        <div class="card hidden" id="username-card">
+            <h1>Войти в аккаунт</h1>
+            <form id="username-form">
+                <div class="form-group">
+                    <label for="username-username">Логин</label>
+                    <input type="text" id="username-username" placeholder="Введите ваш логин" required>
+                    <div class="error-message" id="username-username-error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username-password">Пароль</label>
+                    <input type="password" id="username-password" placeholder="Введите пароль" required>
+                    <div class="error-message" id="username-password-error"></div>
+                </div>
+                
+                <button type="submit">Войти</button>
+                
+                <div class="divider"></div>
+                
+                <div class="switch-form">
+                    Нет аккаунта? 
+                    <a class="switch-link" id="show-register">Зарегистрироваться</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Текущий пользователь
+        let currentUser = null;
+
+        // Переключение между формами
+        document.getElementById('show-username').addEventListener('click', function() {
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('username-card').classList.remove('hidden');
+        });
+        
+        document.getElementById('show-register').addEventListener('click', function() {
+            document.getElementById('username-card').classList.add('hidden');
+            document.getElementById('register-card').classList.remove('hidden');
+        });
+
+        // Обработка формы регистрации
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            resetErrorMessages('register');
+            
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            let isValid = true;
+            
+            if (username.length < 3) {
+                showError('register-username-error', 'Логин должен содержать не менее 3 символов');
+                isValid = false;
+            }
+            
+            if (password.length < 6) {
+                showError('register-password-error', 'Пароль должен содержать не менее 6 символов');
+                isValid = false;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('register-confirm-error', 'Пароли не совпадают');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Имитация успешной регистрации
+                simulateApiCall('register', username, password)
+                    .then(response => {
+                        if (response.success) {
+                            showSuccessMessage('Регистрация прошла успешно!');
+                            currentUser = username;
+                            localStorage.setItem('currentUser', username);
+                            setTimeout(() => {
+                                // Переход на страницу комнат после успешной регистрации
+                                window.location.href = 'rooms.html';
+                            }, 1500);
+                        } else {
+                            showError('register-username-error', 'Ошибка регистрации. Возможно, такой логин уже существует.');
+                        }
+                    })
+                    .catch(error => {
+                        showError('register-username-error', 'Ошибка соединения с сервером');
+                    });
+            }
+        });
+        
+        // Обработка формы входа
+        document.getElementById('username-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            resetErrorMessages('username');
+            
+            const username = document.getElementById('username-username').value;
+            const password = document.getElementById('username-password').value;
+            
+            let isValid = true;
+            
+            if (username.length === 0) {
+                showError('username-username-error', 'Введите логин');
+                isValid = false;
+            }
+            
+            if (password.length === 0) {
+                showError('username-password-error', 'Введите пароль');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Имитация успешного входа
+                simulateApiCall('username', username, password)
+                    .then(response => {
+                        if (response.success) {
+                            showSuccessMessage('Вход выполнен успешно!');
+                            currentUser = username;
+                            localStorage.setItem('currentUser', username);
+                            setTimeout(() => {
+                                // Переход на страницу комнат после успешного входа
+                                window.location.href = 'rooms.html';
+                            }, 1500);
+                        } else {
+                            showError('username-username-error', 'Неверный логин или пароль');
+                        }
+                    })
+                    .catch(error => {
+                        showError('username-username-error', 'Ошибка соединения с сервером');
+                    });
+            }
+        });
+
+        // Имитация API-запроса
+        function simulateApiCall(endpoint, username, password) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // В реальном приложении здесь будет fetch запрос
+                    // Для демонстрации всегда возвращаем успех
+                    resolve({
+                        success: true,
+                        message: `${endpoint === 'username' ? 'Вход' : 'Регистрация'} выполнен успешно`,
+                        user: username
+                    });
+                }, 1000);
+            });
+        }
+
+        // Вспомогательные функции
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function showSuccessMessage(message) {
+            // Создаем временное сообщение об успехе
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.style.display = 'block';
+            successDiv.style.textAlign = 'center';
+            successDiv.style.marginBottom = '20px';
+            successDiv.textContent = message;
+            
+            const currentCard = document.querySelector('.card:not(.hidden)');
+            currentCard.insertBefore(successDiv, currentCard.firstChild);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+        
+        function resetErrorMessages(formType) {
+            const errorElements = document.querySelectorAll(`#${formType}-card .error-message`);
+            errorElements.forEach(element => {
+                element.style.display = 'none';
+            });
+        }
+
+        // Проверяем, авторизован ли пользователь при загрузке страницы
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                // Если пользователь уже авторизован, перенаправляем на страницу комнат
+                window.location.href = 'rooms.html';
+            }
+        });
+    </script>
+</body>
+</html>

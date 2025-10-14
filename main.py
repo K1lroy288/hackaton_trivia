@@ -41,5 +41,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Запуск через `python main.py`
 if __name__ == "__main__":
+    from repository.QuestionRepository import QuestionRepository
+    questionRepository = QuestionRepository()
+    questionRepository.addQustionsFromOpenTriviaDB()
+    
     import uvicorn
-    uvicorn.run("main:app", host = settings.SERVER_HOST, port = 3425, reload = True)
+    uvicorn.run("main:app", host = settings.SERVER_HOST, port = int(settings.SERVER_PORT), reload = True)

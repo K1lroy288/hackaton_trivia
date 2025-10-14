@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комнаты викторины</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .user-info {
+            color: white;
+            font-weight: 500;
+            font-size: 18px;
+        }
+        
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 16px;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .logo {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .logo span {
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .create-room-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .create-room-btn:hover {
+            background: linear-gradient(to right, #27ae60, #219653);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .room-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .room-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .room-info {
+            flex: 1;
+        }
+        
+        .room-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .room-description {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .room-stats {
+            display: flex;
+            gap: 15px;
+            color: #777;
+            font-size: 14px;
+        }
+        
+        .room-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-open {
+            background-color: #e8f5e8;
+            color: #2ecc71;
+        }
+        
+        .status-full {
+            background-color: #ffeaea;
+            color: #e74c3c;
+        }
+        
+        .status-playing {
+            background-color: #fff4e6;
+            color: #f39c12;
+        }
+        
+        .password-icon {
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .password-protected {
+            color: #e74c3c;
+        }
+
+        .no-password {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка с информацией пользователя -->
+        <div class="header-bar">
+            <div class="user-info">Добро пожаловать, <span id="username-display"></span>!</div>
+            <button class="logout-btn" id="logout-btn">Выйти</button>
+        </div>
+        
+        <div class="logo">Викторина<span>Онлайн</span></div>
+        
+        <!-- Страница комнат викторины -->
+        <div class="card">
+            <h2>Комнаты викторины</h2>
+            
+            <button class="create-room-btn" id="create-room-btn">Создать новую комнату</button>
+            
+            <div class="room-list" id="room-list">
+                <div class="room-card" data-room-id="1">
+                    <div class="room-info">
+                        <div class="room-title">
+                            <span class="password-icon no-password">🔓</span>
+                            Общая викторина #1
+                        </div>
+                        <div class="room-description">Тест на общие знания для всех желающих</div>
+                    </div>
+                    <div class="room-stats">
+                        <span>👥 4/8</span>
+                        <span class="room-status status-open">Открыта</span>
+                    </div>
+                </div>
+                
+                <div class="room-card" data-room-id="2">
+                    <div class="room-info">
+                        <div class="room-title">
+                            <span class="password-icon no-password">🔓</span>
+                            География мира
+                        </div>
+                        <div class="room-description">Проверьте свои знания географии</div>
+                    </div>
+                    <div class="room-stats">
+                        <span>👥 8/8</span>
+                        <span class="room-status status-full">Полная</span>
+                    </div>
+                </div>
+                
+                <div class="room-card" data-room-id="3">
+                    <div class="room-info">
+                        <div class="room-title">
+                            <span class="password-icon password-protected">🔒</span>
+                            Исторический баттл
+                        </div>
+                        <div class="room-description">Соревнование по истории для эрудитов</div>
+                    </div>
+                    <div class="room-stats">
+                        <span>👥 6/6</span>
+                        <span class="room-status status-playing">Идет игра</span>
+                    </div>
+                </div>
+                
+                <div class="room-card" data-room-id="4">
+                    <div class="room-info">
+                        <div class="room-title">
+                            <span class="password-icon password-protected">🔒</span>
+                            Кино и сериалы
+                        </div>
+                        <div class="room-description">Угадай фильм по кадру и актера по фото</div>
+                    </div>
+                    <div class="room-stats">
+                        <span>👥 3/10</span>
+                        <span class="room-status status-open">Открыта</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Проверяем авторизацию при загрузке страницы
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (!savedUser) {
+                // Если пользователь не авторизован, перенаправляем на страницу авторизации
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Устанавливаем имя пользователя
+            document.getElementById('username-display').textContent = savedUser;
+        });
+
+        // Кнопка выхода
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+
+        // Создание комнаты
+        document.getElementById('create-room-btn').addEventListener('click', function() {
+            alert('Функция создания комнаты будет реализована позже!');
+            // Здесь можно добавить логику создания новой комнаты
+        });
+
+        // Обработка кликов по комнатам
+        document.getElementById('room-list').addEventListener('click', function(e) {
+            const roomCard = e.target.closest('.room-card');
+            if (roomCard) {
+                const roomId = roomCard.getAttribute('data-room-id');
+                const roomTitle = roomCard.querySelector('.room-title').textContent;
+                joinRoom(roomId, roomTitle);
+            }
+        });
+
+        // Функция входа в комнату
+        function joinRoom(roomId, roomTitle) {
+            alert(`Присоединяемся к комнате: "${roomTitle}" (ID: ${roomId})`);
+            // Здесь будет редирект на страницу комнаты или открытие модального окна
+            // window.location.href = `/room/${roomId}`;
+        }
+    </script>
+</body>
+</html>

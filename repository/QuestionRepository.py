@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func
 from model.Models import Question, Base
 from config.config import Settings
+import requests
 
 class QuestionRepository:
     
@@ -50,5 +51,28 @@ class QuestionRepository:
                 return session.scalar(stmt)
         except SQLAlchemyError as e:
             raise RuntimeError(f'Failed to fetch random question: {e}')
+    
+    def questionCountInDB(self):
+        try:
+            with Session(self.engine) as session:
+               return session.query(func.count(Question.id)).scalar()
+        except SQLAlchemyError as e:
+            raise RuntimeError(f'Failed to fetch count questions: {e}')
+    
+    def addQustionsFromOpenTriviaDB(self):
+        openTriviaDBURL = "https://opentdb.com/api.php?amount=50&type=multiple"
+        questions = requests.get(openTriviaDBURL).json()
+        for q in questions:
+            questionJSON = Question(
+                difficulty=q['difficulty'],
+                category=q['category'],
+                question=q['question'],
+                correct_answer=q['correct_answer'],
+                incorrect_answers=q['incorrect_answers'],
+            )
+            self.createQuestion(questionJSON)
+        
+        if self.questionCountInDB() < 1000:
+            self.addQustionsFromOpenTriviaDB()
         
     
