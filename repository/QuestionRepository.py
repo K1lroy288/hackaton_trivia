@@ -61,7 +61,7 @@ class QuestionRepository:
             raise RuntimeError(f'Failed to fetch count questions: {e}')
     
     def addQustionsFromOpenTriviaDB(self):
-        if self.questionCountInDB() < 300:
+        if self.questionCountInDB() > 300:
             print(self.questionCountInDB())
             return
         openTriviaDBURL = "https://opentdb.com/api.php?amount=50&type=multiple"
