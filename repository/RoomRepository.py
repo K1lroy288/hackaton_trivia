@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from model.Models import User, Room, Base, RoomParticipant
 from config.config import Settings
 import bcrypt
+from datetime import datetime
 
 class RoomRepository:
     
@@ -75,45 +76,39 @@ class RoomRepository:
         /api/v1/room/{room_id}/join [PATCH]
         body: username, user.id
     """
+
     def addParticipant(self, room_id: int, user_id: int):
         try:
-            print(f"Repository: Adding user {user_id} to room {room_id}")  # Логирование
-            
             with Session(self.engine) as session:
-                # Проверяем существование комнаты и пользователя
+                # Проверяем существование
                 room = session.get(Room, room_id)
                 if not room:
                     raise ValueError(f"Room {room_id} not found")
-                    
                 user = session.get(User, user_id)
                 if not user:
                     raise ValueError(f"User {user_id} not found")
-                
-                # Проверяем, не является ли пользователь уже участником
+
+                # Проверяем, не добавлен ли уже
                 existing = session.execute(
                     select(RoomParticipant)
-                    .where(RoomParticipant.room_id == room_id)
-                    .where(RoomParticipant.user_id == user_id)
-                ).scalar_one_or_none()
-
+                    .where(RoomParticipant.c.room_id == room_id)
+                    .where(RoomParticipant.c.user_id == user_id)
+                ).first()
                 if existing:
-                    print(f"User {user_id} is already in room {room_id}")  # Логирование
-                    return  # Уже участник, ничего не делаем
+                    return  # уже есть
 
-                # Создаем новую запись участника
-                rp = RoomParticipant(room_id=room_id, user_id=user_id)
-                session.add(rp)
+                # Добавляем в ассоциативную таблицу
+                session.execute(
+                    RoomParticipant.insert().values(
+                        room_id=room_id,
+                        user_id=user_id,
+                        is_ready=False,  # по умолчанию
+                        joined_at=datetime.utcnow()
+                    )
+                )
                 session.commit()
-                session.refresh(rp)
-                
-                print(f"Successfully added user {user_id} to room {room_id}")  # Логирование
-                
         except SQLAlchemyError as e:
-            print(f"SQLAlchemy error in addParticipant: {str(e)}")  # Логирование
-            raise RuntimeError(f'Error adding participant {user_id} to room {room_id}: {e}')
-        except Exception as e:
-            print(f"Unexpected error in addParticipant: {str(e)}")  # Логирование
-            raise
+            raise RuntimeError(f"DB error in addParticipant: {e}")
     
     """ 
         эта функция создает комнату
@@ -224,15 +219,18 @@ class RoomRepository:
                 session.commit()
         except SQLAlchemyError as e:
             RuntimeError(f'Error update room: {e}')
-            
+
     def getParticipants(self, room_id: int):
         try:
             with Session(self.engine) as session:
                 room = session.get(Room, room_id)
-                participants = room.participants_assoc
-                return participants
+                if not room:
+                    raise ValueError(f"Room {room_id} not found")
+                # Явно загружаем связь
+                print(list(room.participants))
+                return list(room.participants)
         except SQLAlchemyError as e:
-            RuntimeError(f'Error of get participants of room {room_id}: {e}')
+            raise RuntimeError(f"DB error in getParticipants: {e}")
             
     def getRoomByName(self, name: str):
         try:

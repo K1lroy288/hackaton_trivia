@@ -76,6 +76,5 @@ class RoomService:
         self.room_repository.deleteRoom(room_id)
 
     def getCountParticipants(self, room_id: int):
-        users_id = self.room_repository.getParticipants(room_id)
-        return [user.to_dict() for user in self.user_repository.getUserById(users_id)]
-
+        users = self.room_repository.getParticipants(room_id)
+        return [user.to_dict() for user in users]
