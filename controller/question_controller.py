@@ -17,3 +17,4 @@ def get_random_question():
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+
