@@ -3,6 +3,8 @@ from service.RoomService import RoomService
 from pydantic import BaseModel
 from typing import Optional
 from model.Models import Room, User
+from fastapi import WebSocket, WebSocketDisconnect
+from webSocketManager.manager import manager
 
 router = APIRouter()
 room_service = RoomService()
@@ -96,3 +98,17 @@ def controller_delete_room_by_id(room_id: int):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.websocket("/ws/room/{room_id}")
+async def websoсket_room(websocket: WebSocket , room_id: int):
+    await manager.connect(room_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            await manager.broadcast_to_room(room_id, {
+                "type": "answer",
+                "user_id": data.get("user_id"),
+                "answer": data.get("answer")
+            })
+    except WebSocketDisconnect:
+        manager.disconnect(room_id, websocket)

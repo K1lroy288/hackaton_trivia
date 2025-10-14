@@ -1,5 +1,5 @@
 from repository.RoomRepository import RoomRepository
-from model.Models import Room, User
+from model.Models import Room
 
 class RoomService:
     room_repository: RoomRepository
