@@ -50,6 +50,18 @@ class User(Base):
             "created_at": self.created_at.isoformat(),
         }
 
+class RoomParticipant(Base):
+    __tablename__ = 'room_participants'
+    
+    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id'), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
+    
+    is_ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    
+    room: Mapped["Room"] = relationship(back_populates="participants_assoc")
+    user: Mapped["User"] = relationship(back_populates="rooms_assoc")
+
 class Room(Base):
     __tablename__ = 'rooms'
     
@@ -78,7 +90,6 @@ class Room(Base):
             'roomname': self.name,
             'is_running': self.is_running,
             'created_at': self.created_at.isoformat(),
-            'participants': [user.to_dict() for user in self.participants],
         }
     
     def __repr__(self) -> str:
@@ -105,15 +116,3 @@ class Question(Base):
             'category': self.category,
             'difficulty': self.difficulty,
         }
-
-class RoomParticipant(Base):
-    __tablename__ = 'room_participants'
-    
-    room_id: Mapped[int] = mapped_column(ForeignKey('rooms.id'), primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
-    
-    is_ready: Mapped[bool] = mapped_column(Boolean, default=False)
-    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    
-    room: Mapped["Room"] = relationship(back_populates="participants_assoc")
-    user: Mapped["User"] = relationship(back_populates="rooms_assoc")
