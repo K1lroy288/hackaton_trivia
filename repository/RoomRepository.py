@@ -155,5 +155,6 @@ class RoomRepository:
                     return False
                 if not bcrypt.checkpw(room_password.encode('utf-8'), room.password.encode('utf-8')):
                     raise ValueError("Wrong password")
+                return True
         except SQLAlchemyError as e:
             raise RuntimeError(f'Failed to fetch password of room {room_id}: {e}')
