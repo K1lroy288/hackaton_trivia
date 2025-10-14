@@ -30,6 +30,10 @@ app.include_router(room_router)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/rooms.html")
+async def index(request: Request):
+    return templates.TemplateResponse("rooms.html", {"request": request})
+
 # Глобальный обработчик ошибок (опционально, но полезно)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
