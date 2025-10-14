@@ -49,6 +49,7 @@ if __name__ == "__main__":
     questionRepository = QuestionRepository()
     running = True
     print(questionRepository.questionCountInDB())
+    
     """ while(running):
         running = questionRepository.addQustionsFromOpenTriviaDB() """
     import uvicorn
