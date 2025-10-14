@@ -590,13 +590,12 @@
             
             // Устанавливаем данные комнаты
             document.getElementById('room-name').textContent = currentRoom.name || 'Название комнаты';
-            document.getElementById('room-description').textContent = currentRoom.description || 'Описание комнаты';
             
             // Эмулируем данные викторины, так как их нет в API
             document.getElementById('questions-count').textContent = currentRoom.questionCount || 10;
             document.getElementById('time-limit').textContent = currentRoom.timeLimit || 30;
-            document.getElementById('difficulty').textContent = getDifficultyText(currentRoom.difficulty);
-            document.getElementById('quiz-theme').textContent = `Тема викторины: ${currentRoom.theme || 'Общие знания'}`;
+            
+            
             
             // Устанавливаем иконку пароля
             const roomIcon = document.getElementById('room-icon');

@@ -492,7 +492,7 @@
             
             // Определяем статус комнаты на основе данных из API
             const hasPassword = room.password !== null && room.password !== '';
-            const isPlaying = room.status === 'playing' || room.is_running;
+            const isPlaying = room.status === 'PLAYING' || room.is_running;
             
             let statusClass, statusText;
             
