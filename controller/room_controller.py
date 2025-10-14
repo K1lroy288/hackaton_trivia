@@ -80,7 +80,7 @@ def controller_find_room_by_name(roomname: str = Path(..., regex=r"^[a-zA-Z0-9_-
 
 
 @router.delete("/api/v1/room/{room_id}/{user_id}")
-def controller_delete_room_by_id(room_id: int, user_id: int):
+def controller_delete_user_by_id(room_id: int, user_id: int):
     try:
         room_service.remove_participant(room_id, user_id)
     except ValueError as e:
@@ -88,3 +88,11 @@ def controller_delete_room_by_id(room_id: int, user_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.delete("/api/v1/room/{room_id}")
+def controller_delete_room_by_id(room_id: int):
+    try:
+        room_service.delete_room(room_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
