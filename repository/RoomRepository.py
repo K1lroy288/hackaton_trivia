@@ -70,7 +70,7 @@ class RoomRepository:
         эта функция по добавлению участника в комнату
         принимает id комнаты и пользователя
         ничего не возвращает
-        /api/v1/room/{room_id}/{user_id}/join [PATCH]
+        /api/v1/room/{room_id}/join [PATCH]
         body: username, user.id
     """
     def addParticipant(self, room_id: int, user: User):
@@ -146,8 +146,12 @@ class RoomRepository:
         это не апи функция, ты вызываешь ее при добавлении пользователя в комнату
         проверяешь пароль
     """
-    def verify_room_password(self, roomname: str, password: str):
-        room = self.findByRoomname(roomname)
-        if not room.password:
-            return password is None
-        return password
+    def verify_room_password(self, room_id: int):
+        try:
+            with Session(self.engine) as session:
+                room = session.get(Room, room_id)
+                if not room.password:
+                    return None
+                return room.password
+        except SQLAlchemyError as e:
+            raise RuntimeError(f'Failed to fetch password of room {room_id}: {e}')
