@@ -133,20 +133,11 @@
         .room-title {
             font-weight: 600;
             color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .room-stats {
-            display: flex;
-            gap: 15px;
-            color: #777;
-            font-size: 14px;
+            font-size: 18px;
         }
         
         .room-status {
-            padding: 4px 12px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
@@ -157,7 +148,7 @@
             color: #2ecc71;
         }
         
-        .status-full {
+        .status-closed {
             background-color: #ffeaea;
             color: #e74c3c;
         }
@@ -165,11 +156,6 @@
         .status-playing {
             background-color: #fff4e6;
             color: #f39c12;
-        }
-        
-        .password-icon {
-            font-size: 16px;
-            color: #e74c3c;
         }
         
         /* Стили для модальных окон */
@@ -493,32 +479,30 @@
             roomCard.setAttribute('data-room-id', room.id);
             
             // Определяем статус комнаты
-            const currentPlayers = room.current_players || 0;
+            const hasPassword = room.has_password || false;
             const isPlaying = room.status === 'playing';
             
-            let statusClass = 'status-open';
-            let statusText = 'Открыта';
+            let statusClass, statusText;
             
             if (isPlaying) {
                 statusClass = 'status-playing';
                 statusText = 'Идет игра';
+            } else if (hasPassword) {
+                statusClass = 'status-closed';
+                statusText = 'Закрыто';
+            } else {
+                statusClass = 'status-open';
+                statusText = 'Открыто';
             }
             
-            // Определяем иконку пароля - показываем только если есть пароль
-            const hasPassword = room.has_password || false;
-            const passwordIcon = hasPassword ? '🔒' : '';
+            // Используем правильное поле для названия комнаты
+            const roomName = room.name || 'Без названия';
             
             roomCard.innerHTML = `
                 <div class="room-info">
-                    <div class="room-title">
-                        ${hasPassword ? `<span class="password-icon">${passwordIcon}</span>` : ''}
-                        ${room.name || 'Без названия'}
-                    </div>
+                    <div class="room-title">${roomName}</div>
                 </div>
-                <div class="room-stats">
-                    <span>👥 ${currentPlayers}</span>
-                    <span class="room-status ${statusClass}">${statusText}</span>
-                </div>
+                <div class="room-status ${statusClass}">${statusText}</div>
             `;
             
             return roomCard;
@@ -536,9 +520,11 @@
             if (roomCard) {
                 currentRoomId = roomCard.getAttribute('data-room-id');
                 const roomTitleElement = roomCard.querySelector('.room-title');
-                // Убираем иконку замка из текста названия комнаты
                 currentRoomTitle = roomTitleElement.textContent.trim();
-                const isPasswordProtected = roomCard.querySelector('.password-icon') !== null;
+                
+                // Определяем, защищена ли комната паролем по статусу
+                const statusElement = roomCard.querySelector('.room-status');
+                const isPasswordProtected = statusElement.classList.contains('status-closed');
                 
                 joinRoom(currentRoomId, currentRoomTitle, isPasswordProtected);
             }
