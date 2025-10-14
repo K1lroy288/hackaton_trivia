@@ -183,4 +183,11 @@ class RoomRepository:
                 session.commit()
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error of delete room {room_id}: {e}')
-            
+        
+    def update_room(self, room: Room):
+        try:
+            with Session(self.engine) as session:
+                session.merge(room)
+                session.commit()
+        except SQLAlchemyError as e:
+            RuntimeError(f'Error update room: {e}')
