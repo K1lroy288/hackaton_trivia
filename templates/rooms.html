@@ -417,12 +417,13 @@
                 
                 const newRoom = await response.json();
                 
-                // Закрываем модальное окно и обновляем список комнат
+                // Закрываем модальное окно и очищаем форму
                 document.getElementById('create-room-modal').style.display = 'none';
                 document.getElementById('create-room-form').reset();
                 
-                alert('Комната успешно создана!');
-                loadRooms(); // Перезагружаем список комнат
+                // Сразу переходим в созданную комнату
+                const hasPassword = Boolean(password);
+                window.location.href = `room.html?id=${newRoom.id}&name=${encodeURIComponent(roomName)}&password=${hasPassword}`;
                 
             } catch (error) {
                 console.error('Ошибка при создании комнаты:', error);
