@@ -133,6 +133,9 @@
         .room-title {
             font-weight: 600;
             color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .room-stats {
@@ -166,15 +169,7 @@
         
         .password-icon {
             font-size: 16px;
-            margin-right: 8px;
-        }
-
-        .password-protected {
             color: #e74c3c;
-        }
-
-        .no-password {
-            color: #2ecc71;
         }
         
         /* Стили для модальных окон */
@@ -283,8 +278,7 @@
             font-weight: 500;
         }
 
-        .form-group input,
-        .form-group select {
+        .form-group input {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -292,8 +286,7 @@
             font-size: 14px;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        .form-group input:focus {
             border-color: #3498db;
             outline: none;
         }
@@ -342,16 +335,6 @@
                 <div class="form-group">
                     <label for="room-name-input">Название комнаты</label>
                     <input type="text" id="room-name-input" placeholder="Введите название комнаты" required>
-                </div>
-                <div class="form-group">
-                    <label for="room-max-players">Максимум игроков</label>
-                    <select id="room-max-players">
-                        <option value="2">2 игрока</option>
-                        <option value="4" selected>4 игрока</option>
-                        <option value="6">6 игроков</option>
-                        <option value="8">8 игроков</option>
-                        <option value="10">10 игроков</option>
-                    </select>
                 </div>
                 <div class="form-group">
                     <label for="room-password-input">Пароль (необязательно)</label>
@@ -416,7 +399,6 @@
             e.preventDefault();
             
             const roomName = document.getElementById('room-name-input').value;
-            const maxPlayers = document.getElementById('room-max-players').value;
             const password = document.getElementById('room-password-input').value;
             
             if (!roomName.trim()) {
@@ -431,7 +413,6 @@
                 
                 const roomData = {
                     name: roomName,
-                    max_players: parseInt(maxPlayers),
                     password: password || null
                 };
                 
@@ -513,9 +494,7 @@
             
             // Определяем статус комнаты
             const currentPlayers = room.current_players || 0;
-            const maxPlayers = room.max_players || 8;
             const isPlaying = room.status === 'playing';
-            const isFull = currentPlayers >= maxPlayers;
             
             let statusClass = 'status-open';
             let statusText = 'Открыта';
@@ -523,25 +502,21 @@
             if (isPlaying) {
                 statusClass = 'status-playing';
                 statusText = 'Идет игра';
-            } else if (isFull) {
-                statusClass = 'status-full';
-                statusText = 'Полная';
             }
             
-            // Определяем иконку пароля
+            // Определяем иконку пароля - показываем только если есть пароль
             const hasPassword = room.has_password || false;
-            const passwordIcon = hasPassword ? '🔒' : '🔓';
-            const passwordClass = hasPassword ? 'password-protected' : 'no-password';
+            const passwordIcon = hasPassword ? '🔒' : '';
             
             roomCard.innerHTML = `
                 <div class="room-info">
                     <div class="room-title">
-                        <span class="password-icon ${passwordClass}">${passwordIcon}</span>
+                        ${hasPassword ? `<span class="password-icon">${passwordIcon}</span>` : ''}
                         ${room.name || 'Без названия'}
                     </div>
                 </div>
                 <div class="room-stats">
-                    <span>👥 ${currentPlayers}/${maxPlayers}</span>
+                    <span>👥 ${currentPlayers}</span>
                     <span class="room-status ${statusClass}">${statusText}</span>
                 </div>
             `;
@@ -560,8 +535,10 @@
             const roomCard = e.target.closest('.room-card');
             if (roomCard) {
                 currentRoomId = roomCard.getAttribute('data-room-id');
-                currentRoomTitle = roomCard.querySelector('.room-title').textContent.trim();
-                const isPasswordProtected = roomCard.querySelector('.password-protected') !== null;
+                const roomTitleElement = roomCard.querySelector('.room-title');
+                // Убираем иконку замка из текста названия комнаты
+                currentRoomTitle = roomTitleElement.textContent.trim();
+                const isPasswordProtected = roomCard.querySelector('.password-icon') !== null;
                 
                 joinRoom(currentRoomId, currentRoomTitle, isPasswordProtected);
             }
