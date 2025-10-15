@@ -102,21 +102,68 @@ class Question(Base):
     __tablename__ = 'questions'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    question: Mapped[str] = mapped_column(Text, nullable=False)  # ← исправлено: было 'question'
+    question: Mapped[str] = mapped_column(Text, nullable=False)
     correct_answer: Mapped[str] = mapped_column(String(255), nullable=False)
-    incorrect_answers: Mapped[str] = mapped_column(Text, nullable=False)  # JSON list
+    incorrect_answers: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[str] = mapped_column(String(100), nullable=True)
     difficulty: Mapped[str] = mapped_column(String(20), nullable=True)
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'question': self.question,
-            'correct_answer': self.correct_answer,
-            'incorrect_answers': [self.correct_answer] + json.loads(self.incorrect_answers),
-            'category': self.category,
-            'difficulty': self.difficulty,
-        }
+        try:
+            # Диагностика
+            print(f"DEBUG: incorrect_answers = {repr(self.incorrect_answers)}")
+            
+            # Обрабатываем incorrect_answers
+            if isinstance(self.incorrect_answers, list):
+                # Если уже список (например, из SQLAlchemy)
+                incorrect_list = self.incorrect_answers
+            elif isinstance(self.incorrect_answers, str):
+                try:
+                    # Пробуем распарсить как JSON
+                    incorrect_list = json.loads(self.incorrect_answers)
+                except json.JSONDecodeError:
+                    # Если не JSON, пробуем как Python literal
+                    try:
+                        incorrect_list = eval(self.incorrect_answers)
+                    except:
+                        # Если все fails, создаем пустой список
+                        incorrect_list = []
+            else:
+                incorrect_list = []
+            
+            # Убедимся, что это список
+            if not isinstance(incorrect_list, list):
+                incorrect_list = []
+            
+            # Создаем варианты ответов
+            options = incorrect_list
+            
+            import random
+            random.shuffle(options)
+            
+            result = {
+                'id': self.id,
+                'question': self.question or "",
+                'correct_answer': self.correct_answer or "",
+                'incorrect_answers': self.incorrect_answers,
+                'category': self.category or "",
+                'difficulty': self.difficulty or "",
+            }
+            
+            print(f"DEBUG: Result dict = {result}")
+            return result
+            
+        except Exception as e:
+            print(f"ERROR in to_dict: {e}")
+            # Возвращаем безопасный fallback
+            return {
+                'id': self.id or 0,
+                'question': self.question or "Error loading question",
+                'correct_answer': self.correct_answer or "",
+                'incorrect_answers': self.incorrect_answers,
+                'category': self.category or "",
+                'difficulty': self.difficulty or "",
+}
         
 class PlayerAnswer(Base):
     __tablename__ = 'player_answers'

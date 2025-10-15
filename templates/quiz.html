@@ -467,7 +467,7 @@
             }
             
             currentUser = savedUser;
-            currentUserId = localStorage.getItem('currentUserId') || 1; // Заглушка
+            currentUserId = localStorage.getItem('currentUserId') || 1;
             document.getElementById('username-display').textContent = currentUser;
             
             // Назначаем обработчики событий
@@ -488,12 +488,8 @@
         
         // Инициализация участников (эмуляция)
         function initializeParticipants() {
-            // Эмулируем участников викторины
             participants = [
                 { id: currentUserId, username: currentUser, score: 0, answered: false },
-                { id: 2, username: 'Участник2', score: 0, answered: false },
-                { id: 3, username: 'Участник3', score: 0, answered: false },
-                { id: 4, username: 'Участник4', score: 0, answered: false }
             ];
             
             updateParticipantsStatus();
@@ -525,14 +521,11 @@
         // Начало викторины
         async function startQuiz() {
             try {
-                // Устанавливаем количество вопросов (эмуляция)
                 questionCount = 10;
                 
-                // Показываем контент викторины
                 document.getElementById('loading-message').style.display = 'none';
                 document.getElementById('quiz-content').style.display = 'block';
                 
-                // Загружаем первый вопрос
                 await loadQuestion();
                 
             } catch (error) {
@@ -543,20 +536,16 @@
         // Загрузка вопроса
         async function loadQuestion() {
             try {
-                // Сбрасываем состояние
                 selectedAnswer = null;
                 answeredParticipants = [];
                 updateParticipantsStatus();
                 
-                // Показываем секцию вопроса и скрываем кулдаун
                 document.getElementById('question-section').style.display = 'block';
                 document.getElementById('cool-down-section').style.display = 'none';
                 document.getElementById('results-section').style.display = 'none';
                 
-                // Обновляем счетчик вопросов
                 updateQuestionCounter();
                 
-                // Получаем случайный вопрос из API
                 const response = await fetch(`${API_BASE_URL}/api/v1/trivia/question`);
                 
                 if (!response.ok) {
@@ -564,20 +553,81 @@
                 }
                 
                 currentQuestion = await response.json();
+                
+                // СОБИРАЕМ ВАРИАНТЫ ОТВЕТОВ ИЗ correct_answer И incorrect_answers
+                prepareQuestionAnswers();
+                
                 displayQuestion();
                 
-                // Обновляем статус
                 document.getElementById('status-message').textContent = 'Выберите правильный ответ';
                 
-                // Запускаем таймер
                 startTimer();
                 
-                // Эмуляция ответов других участников
                 simulateOtherParticipants();
                 
             } catch (error) {
                 throw new Error('Ошибка загрузки вопроса: ' + error.message);
             }
+        }
+        
+        // СОБИРАЕМ ВАРИАНТЫ ОТВЕТОВ ИЗ correct_answer И incorrect_answers
+        function prepareQuestionAnswers() {
+            console.log('Original question:', currentQuestion);
+            
+            // Создаем массив всех вариантов ответов
+            let allAnswers = [];
+            
+            // Добавляем правильный ответ
+            if (currentQuestion.correct_answer) {
+                allAnswers.push(currentQuestion.correct_answer);
+            }
+            
+            // Обрабатываем incorrect_answers
+            if (currentQuestion.incorrect_answers) {
+                let incorrectAnswers = [];
+                
+                // Парсим строку incorrect_answers
+                const incorrectStr = currentQuestion.incorrect_answers.toString().trim();
+                
+                if (incorrectStr.startsWith('{') && incorrectStr.endsWith('}')) {
+                    // Формат: {answer1,answer2,answer3}
+                    const cleanStr = incorrectStr.slice(1, -1);
+                    incorrectAnswers = cleanStr.split(',').map(item => item.trim()).filter(item => item);
+                } else if (incorrectStr.startsWith('[') && incorrectStr.endsWith(']')) {
+                    // Формат: ["answer1","answer2","answer3"]
+                    try {
+                        incorrectAnswers = JSON.parse(incorrectStr);
+                    } catch (e) {
+                        // Если не парсится как JSON, пробуем ручной парсинг
+                        const cleanStr = incorrectStr.slice(1, -1).replace(/"/g, '');
+                        incorrectAnswers = cleanStr.split(',').map(item => item.trim()).filter(item => item);
+                    }
+                } else {
+                    // Простой список через запятую
+                    incorrectAnswers = incorrectStr.split(',').map(item => item.trim()).filter(item => item);
+                }
+                
+                // Добавляем неправильные ответы
+                allAnswers = allAnswers.concat(incorrectAnswers);
+            }
+            
+            // Перемешиваем варианты ответов
+            allAnswers = shuffleArray(allAnswers);
+            
+            // Сохраняем в currentQuestion
+            currentQuestion.answers = allAnswers;
+            
+            console.log('Processed answers:', allAnswers);
+        }
+        
+        // Функция для перемешивания массива
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
         }
         
         // Отображение вопроса
@@ -587,7 +637,7 @@
             const answersGrid = document.getElementById('answers-grid');
             answersGrid.innerHTML = '';
             
-            // Создаем кнопки для каждого варианта ответа
+            // Используем собранные варианты ответов
             currentQuestion.answers.forEach((answer, index) => {
                 const button = document.createElement('button');
                 button.className = 'answer-btn';
@@ -595,22 +645,17 @@
                 button.dataset.index = index;
                 
                 button.addEventListener('click', function() {
-                    // Можно нажать только один раз
                     if (selectedAnswer !== null) return;
                     
-                    // Снимаем выделение с предыдущего выбора (если есть)
                     document.querySelectorAll('.answer-btn').forEach(btn => {
                         btn.classList.remove('selected');
                     });
                     
-                    // Выделяем текущий выбор
                     button.classList.add('selected');
                     selectedAnswer = index;
                     
-                    // Отмечаем, что текущий пользователь ответил
                     markParticipantAnswered(currentUserId);
                     
-                    // Отправляем ответ (эмуляция)
                     submitAnswer();
                 });
                 
@@ -630,12 +675,11 @@
         
         // Эмуляция ответов других участников
         function simulateOtherParticipants() {
-            // Через случайные промежутки времени другие участники "отвечают"
             participants.forEach(participant => {
                 if (participant.id !== currentUserId) {
-                    const randomTime = Math.floor(Math.random() * 20) + 5; // 5-25 секунд
+                    const randomTime = Math.floor(Math.random() * 20) + 5;
                     setTimeout(() => {
-                        if (selectedAnswer !== null) { // Только если текущий пользователь еще не ответил
+                        if (selectedAnswer !== null) {
                             markParticipantAnswered(participant.id);
                         }
                     }, randomTime * 1000);
@@ -658,9 +702,7 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(timer);
-                    // Время вышло, показываем правильный ответ
                     showCorrectAnswer();
-                    // Запускаем кулдаун
                     startCoolDown();
                 }
             }, 1000);
@@ -680,15 +722,12 @@
         
         // Отправка ответа
         function submitAnswer() {
-            // Отключаем все кнопки ответов
             document.querySelectorAll('.answer-btn').forEach(btn => {
                 btn.disabled = true;
             });
             
-            // Обновляем статус
             document.getElementById('status-message').textContent = 'Ожидание других участников...';
             
-            // Останавливаем таймер, если все ответили
             if (answeredParticipants.length === participants.length) {
                 clearInterval(timer);
                 showCorrectAnswer();
@@ -700,27 +739,32 @@
         function showCorrectAnswer() {
             const answerButtons = document.querySelectorAll('.answer-btn');
             
+            // Находим индекс правильного ответа в перемешанном массиве
+            const correctAnswerIndex = currentQuestion.answers.findIndex(
+                answer => answer === currentQuestion.correct_answer
+            );
+            
             // Подсвечиваем правильный ответ зеленым
-            answerButtons[currentQuestion.correct_answer].classList.add('correct');
+            if (correctAnswerIndex !== -1) {
+                answerButtons[correctAnswerIndex].classList.add('correct');
+            }
             
             // Если ответ неверный, подсвечиваем неправильный ответ красным
-            if (selectedAnswer !== null && selectedAnswer !== currentQuestion.correct_answer) {
+            if (selectedAnswer !== null && selectedAnswer !== correctAnswerIndex) {
                 answerButtons[selectedAnswer].classList.add('incorrect');
             }
             
             // Обновляем очки, если ответ правильный
-            if (selectedAnswer === currentQuestion.correct_answer) {
+            if (selectedAnswer === correctAnswerIndex) {
                 score += 10;
                 document.getElementById('score').textContent = score;
                 
-                // Обновляем очки текущего пользователя
                 const currentParticipant = participants.find(p => p.id === currentUserId);
                 if (currentParticipant) {
                     currentParticipant.score = score;
                 }
             }
             
-            // Обновляем статус
             document.getElementById('status-message').textContent = 'Правильный ответ выделен зеленым';
         }
         
@@ -729,7 +773,6 @@
             coolDownLeft = coolDownTime;
             document.getElementById('cool-down-timer').textContent = coolDownLeft;
             
-            // Показываем секцию кулдауна
             document.getElementById('question-section').style.display = 'none';
             document.getElementById('cool-down-section').style.display = 'block';
             
@@ -743,7 +786,6 @@
                 
                 if (coolDownLeft <= 0) {
                     clearInterval(coolDownTimer);
-                    // Переходим к следующему вопросу
                     loadNextQuestion();
                 }
             }, 1000);
@@ -753,13 +795,11 @@
         function loadNextQuestion() {
             currentQuestionIndex++;
             
-            // Сбрасываем статусы участников
             participants.forEach(p => p.answered = false);
             
             if (currentQuestionIndex < questionCount) {
                 loadQuestion();
             } else {
-                // Викторина завершена
                 finishQuiz();
             }
         }
@@ -770,16 +810,13 @@
             document.getElementById('results-section').style.display = 'block';
             document.getElementById('final-score').textContent = score;
             
-            // Загружаем таблицу лидеров
             loadLeaderboard();
         }
         
         // Загрузка таблицы лидеров
         function loadLeaderboard() {
-            // Сортируем участников по убыванию очков
             leaderboard = [...participants].sort((a, b) => b.score - a.score);
             
-            // Отображаем таблицу лидеров
             const leaderboardList = document.getElementById('leaderboard-list');
             leaderboardList.innerHTML = '';
             
