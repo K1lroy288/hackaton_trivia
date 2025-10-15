@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Комната викторины</title>
     <style>
+        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -129,6 +130,18 @@
         .status-waiting {
             background-color: #fff4e6;
             color: #f39c12;
+        }
+        
+        .status-starting {
+            background-color: #3498db;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
         
         .room-description {
@@ -311,6 +324,13 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
+        .ready-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .password-icon {
             font-size: 20px;
             margin-right: 10px;
@@ -406,11 +426,21 @@
             font-size: 16px;
             color: #666;
         }
+        
+        .game-starting-message {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Шапка с информацией пользователя -->
         <div class="header-bar">
             <div class="user-info" id="user-info">Добро пожаловать, <span id="username-display"></span>!</div>
             <div>
@@ -421,7 +451,6 @@
         
         <div class="logo">Викторина<span>Онлайн</span></div>
         
-        <!-- Основной контент комнаты -->
         <div class="card">
             <div id="loading-message" class="loading">Загрузка данных комнаты...</div>
             <div id="error-message" class="error-message" style="display: none;"></div>
@@ -439,17 +468,17 @@
                     Описание комнаты будет здесь
                 </div>
                 
+                <div id="game-starting-message" class="game-starting-message" style="display: none;">
+                    🎮 Игра начинается! Подготовьтесь...
+                </div>
+                
                 <div class="room-content">
-                    <!-- Секция участников -->
                     <div class="participants-section">
                         <h3 class="section-title">Участники (<span id="participants-count">0</span>)</h3>
                         <div class="ready-count" id="ready-count">Готовы: 0/0</div>
-                        <ul class="participants-list" id="participants-list">
-                            <!-- Список участников будет заполняться динамически -->
-                        </ul>
+                        <ul class="participants-list" id="participants-list"></ul>
                     </div>
                     
-                    <!-- Секция викторины -->
                     <div class="quiz-section">
                         <h3 class="section-title">Информация о викторине</h3>
                         
@@ -471,7 +500,6 @@
         </div>
     </div>
     
-    <!-- Модальное окно для пароля -->
     <div class="modal" id="password-modal">
         <div class="modal-content">
             <h3>Введите пароль для комнаты</h3>
@@ -484,39 +512,33 @@
     </div>
 
     <script>
-        // API адрес
         const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3425`;
-        
-        // Получаем параметры из URL
         const urlParams = new URLSearchParams(window.location.search);
         const roomId = urlParams.get('id');
         
-        // Текущий пользователь и комната
         let currentUser = null;
-        let currentUserId = null; // Нужно получить ID пользователя
+        let currentUserId = null;
         let currentRoom = null;
         let isOwner = false;
         let isReady = false;
         let pollInterval = null;
-        
-        // Инициализация страницы
+        let gameStarted = false;
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Проверяем авторизацию
             const savedUser = localStorage.getItem('currentUser');
-            if (!savedUser) {
+            const savedUserId = localStorage.getItem('currentUserId');
+            
+            if (!savedUser || !savedUserId) {
                 window.location.href = 'index.html';
                 return;
             }
             
             currentUser = savedUser;
-            // TODO: Нужно получить ID пользователя из localStorage или другого места
-            currentUserId = localStorage.getItem('currentUserId') || 1; // Заглушка
+            currentUserId = parseInt(savedUserId);
             document.getElementById('username-display').textContent = currentUser;
             
-            // Загружаем данные комнаты
             loadRoomData();
             
-            // Назначаем обработчики событий
             document.getElementById('back-btn').addEventListener('click', function() {
                 leaveRoom();
                 window.location.href = 'rooms.html';
@@ -530,9 +552,7 @@
             });
             
             document.getElementById('ready-btn').addEventListener('click', toggleReady);
-            document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
             
-            // Обработчики для модального окна пароля
             document.getElementById('cancel-password').addEventListener('click', function() {
                 document.getElementById('password-modal').style.display = 'none';
                 window.location.href = 'rooms.html';
@@ -540,11 +560,9 @@
             
             document.getElementById('submit-password').addEventListener('click', checkPassword);
             
-            // Запускаем опрос состояния комнаты
             startPolling();
         });
         
-        // Загрузка данных комнаты
         async function loadRoomData() {
             if (!roomId) {
                 showError('ID комнаты не указан');
@@ -565,8 +583,6 @@
                 
                 currentRoom = await response.json();
                 displayRoomData();
-                
-                // Загружаем участников (эмуляция, так как эндпоинта нет)
                 await loadParticipants();
                 
             } catch (error) {
@@ -574,37 +590,35 @@
             }
         }
         
-        // Отображение данных комнаты
         function displayRoomData() {
             document.getElementById('loading-message').style.display = 'none';
             document.getElementById('room-content').style.display = 'block';
             
-            // Устанавливаем данные комнаты
             document.getElementById('room-name').textContent = currentRoom.name || 'Название комнаты';
-            
             document.getElementById('time-limit').textContent = currentRoom.timeLimit || 30;
             
-            // Устанавливаем статус комнаты
             const roomStatus = document.getElementById('room-status');
             roomStatus.textContent = getStatusText(currentRoom.status);
             roomStatus.className = 'room-status ' + getStatusClass(currentRoom.status);
         }
         
         async function loadParticipants() {
-            if (!roomId) {
-                console.warn('Room ID not found in URL');
-                return;
-            }
+            if (!roomId || gameStarted) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/participants`);
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/participants?t=${timestamp}`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const participants = await response.json();
+                console.log('Участники с сервера:', participants);
                 displayParticipants(participants);
+                
+                // Проверяем, все ли готовы и запускаем игру если да
+                await checkAllReadyAndStartGame(participants);
                 
             } catch (error) {
                 console.error('Ошибка загрузки участников:', error);
@@ -612,81 +626,178 @@
             }
         }
         
-        // Отображение списка участников
-function displayParticipants(participants) {
-    const participantsList = document.getElementById('participants-list');
+        function displayParticipants(participants) {
+            const participantsList = document.getElementById('participants-list');
+            if (!participantsList) return;
 
-    // Проверка: если элемент не найден — выходим
-    if (!participantsList) {
-        console.error("Элемент #participants-list не найден!");
-        return;
-    }
+            participantsList.innerHTML = '';
+            document.getElementById('participants-count').textContent = participants.length;
 
-    participantsList.innerHTML = '';
+            isOwner = participants.some(p => p.username === currentUser && p.isOwner);
 
-    // Обновляем счетчик участников
-    document.getElementById('participants-count').textContent = participants.length;
+            const readyCount = participants.filter(p => p.is_ready).length;
+            const totalCount = participants.length;
+            document.getElementById('ready-count').textContent = `Готовы: ${readyCount}/${totalCount}`;
 
-    // Проверяем, является ли текущий пользователь владельцем
-    isOwner = participants.some(p => p.username === currentUser && p.isOwner);
+            const currentParticipant = participants.find(p => p.username === currentUser);
+            if (currentParticipant) {
+                console.log('Текущий пользователь в списке:', currentParticipant);
+                isReady = currentParticipant.is_ready;
+                console.log('Установлено isReady:', isReady);
+                updateReadyButtonUI();
+            }
 
-    // Считаем готовых участников
-    const readyCount = participants.filter(p => p.isReady).length;
-    const totalCount = participants.length;
-    document.getElementById('ready-count').textContent = `Готовы: ${readyCount}/${totalCount}`;
+            participants.forEach(participant => {
+                const li = document.createElement('li');
+                li.className = 'participant';
+                const firstLetter = participant.username.charAt(0).toUpperCase();
 
-    // Проверяем готовность текущего пользователя
-    const currentParticipant = participants.find(p => p.username === currentUser);
-    if (currentParticipant) {
-        isReady = currentParticipant.isReady;
-        updateReadyButton();
-    }
+                li.innerHTML = `
+                    <div class="participant-avatar">${firstLetter}</div>
+                    <div class="participant-name">${participant.username}</div>
+                    ${participant.isOwner ? '<div class="owner-badge">Создатель</div>' : ''}
+                    <div class="ready-status ${participant.is_ready ? 'ready-true' : 'ready-false'}">
+                        ${participant.is_ready ? 'Готов' : 'Не готов'}
+                    </div>
+                `;
 
-    // Активируем кнопку начала викторины если все готовы и пользователь владелец
-    const startBtn = document.getElementById('start-quiz-btn');
-    if (startBtn) {
-        startBtn.disabled = !(isOwner && readyCount === totalCount && totalCount > 0);
-    }
-
-    // Отображаем участников
-    participants.forEach(participant => {
-        const li = document.createElement('li');
-        li.className = 'participant';
-
-        // Создаем аватар с первой буквой имени
-        const firstLetter = participant.username.charAt(0).toUpperCase();
-
-        li.innerHTML = `
-            <div class="participant-avatar">${firstLetter}</div>
-            <div class="participant-name">${participant.username}</div>
-            ${participant.isOwner ? '<div class="owner-badge">Создатель</div>' : ''}
-            <div class="ready-status ${participant.isReady ? 'ready-true' : 'ready-false'}">
-                ${participant.isReady ? 'Готов' : 'Не готов'}
-            </div>
-        `;
-
-        participantsList.appendChild(li);
-    });
-}
+                participantsList.appendChild(li);
+            });
+        }
         
-        // Переключение готовности (эмуляция)
-        async function toggleReady() {
-            try {
-                // Эмуляция, так как эндпоинта нет
-                isReady = !isReady;
-                updateReadyButton();
+        async function checkAllReadyAndStartGame(participants) {
+            const totalCount = participants.length;
+            const readyCount = participants.filter(p => p.is_ready).length;
+            
+            // Если все участники готовы и игра еще не началась
+            if (totalCount > 0 && readyCount === totalCount && !gameStarted) {
+                console.log('Все участники готовы! Запускаем игру...');
+                gameStarted = true;
                 
-                // Обновляем список участников
-                await loadParticipants();
+                // Показываем сообщение о начале игры
+                document.getElementById('game-starting-message').style.display = 'block';
+                document.getElementById('room-status').textContent = 'Запуск игры';
+                document.getElementById('room-status').className = 'room-status status-starting';
                 
-            } catch (error) {
-                alert('Ошибка изменения готовности: ' + error.message);
+                // Блокируем кнопку готовности
+                const readyBtn = document.getElementById('ready-btn');
+                if (readyBtn) {
+                    readyBtn.disabled = true;
+                    readyBtn.textContent = 'Ожидаем начала игры...';
+                }
+                
+                // Отправляем запрос на запуск игры
+                await startGame();
             }
         }
         
-        // Обновление кнопки готовности
-        function updateReadyButton() {
+        async function startGame() {
+            try {
+                console.log('Отправка запроса на запуск игры...');
+                
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка запуска игры: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Игра успешно запущена:', result);
+                
+                // Ждем 3 секунды и переходим на страницу игры
+                setTimeout(() => {
+                    window.location.href = `quiz.html?roomId=${roomId}`;
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Ошибка при запуске игры:', error);
+                gameStarted = false;
+                
+                // Разблокируем кнопку в случае ошибки
+                const readyBtn = document.getElementById('ready-btn');
+                if (readyBtn) {
+                    readyBtn.disabled = false;
+                    updateReadyButtonUI();
+                }
+                
+                document.getElementById('game-starting-message').style.display = 'none';
+                document.getElementById('room-status').textContent = 'Ошибка запуска';
+                document.getElementById('room-status').className = 'room-status status-full';
+                
+                alert('Ошибка при запуске игры: ' + error.message);
+            }
+        }
+        
+        async function toggleReady() {
+            console.log('Текущее состояние isReady:', isReady);
+            
+            if (gameStarted) {
+                alert('Игра уже запускается, нельзя изменить статус готовности');
+                return;
+            }
+            
+            const newReadyState = !isReady;
+            console.log('Новое состояние:', newReadyState);
+            
+            isReady = newReadyState;
+            updateReadyButtonUI();
+            
+            await updateReadyStatus(newReadyState);
+        }
+        
+        async function updateReadyStatus(newReadyState) {
             const readyBtn = document.getElementById('ready-btn');
+            if (!readyBtn) return;
+
+            readyBtn.disabled = true;
+
+            try {
+                console.log(`Отправка на сервер: is_ready=${newReadyState}`);
+
+                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/${currentUserId}/ready`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        is_ready: newReadyState
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                console.log('Успешно отправлено на сервер');
+                
+                setTimeout(() => {
+                    loadParticipants();
+                }, 300);
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                isReady = !newReadyState;
+                updateReadyButtonUI();
+                alert('Ошибка: ' + error.message);
+            } finally {
+                if (!gameStarted) {
+                    readyBtn.disabled = false;
+                }
+            }
+        }
+
+        function updateReadyButtonUI() {
+            const readyBtn = document.getElementById('ready-btn');
+            if (!readyBtn) return;
+
+            console.log('Обновление кнопки, isReady=', isReady);
+            
             if (isReady) {
                 readyBtn.textContent = 'Готов';
                 readyBtn.className = 'ready-btn ready-btn-ready';
@@ -696,44 +807,26 @@ function displayParticipants(participants) {
             }
         }
         
-        // Начало викторины
-        async function startQuiz() {
-            if (!isOwner) {
-                alert('Только создатель комнаты может начать викторину');
-                return;
-            }
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
             
-            try {
-                // Используем существующий эндпоинт для начала викторины
-                const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}`, {
-                    method: 'PATCH'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Ошибка начала викторины');
+            pollInterval = setInterval(async () => {
+                if (!gameStarted) {
+                    await loadParticipants();
                 }
-                
-                // Переходим на страницу викторины
-                window.location.href = `quiz.html?roomId=${roomId}`;
-                
-            } catch (error) {
-                alert('Ошибка начала викторины: ' + error.message);
-            }
+            }, 1500);
         }
         
-        // Выход из комнаты
         async function leaveRoom() {
             try {
-                // Используем существующий эндпоинт для выхода
                 await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/${currentUserId}`, {
                     method: 'DELETE'
                 });
             } catch (error) {
-                console.error('Ошибка выхода из комнаты:', error);
+                console.error('Ошибка выхода:', error);
             }
         }
         
-        // Проверка пароля
         async function checkPassword() {
             const passwordInput = document.getElementById('room-password');
             const password = passwordInput.value;
@@ -763,49 +856,21 @@ function displayParticipants(participants) {
                 }
                 
                 document.getElementById('password-modal').style.display = 'none';
-                // Обновляем данные комнаты
                 await loadRoomData();
                 
             } catch (error) {
-                alert('Ошибка входа в комнату: ' + error.message);
+                alert('Ошибка входа: ' + error.message);
                 passwordInput.value = '';
                 passwordInput.focus();
             }
         }
         
-        // Запуск опроса состояния комнаты
-        function startPolling() {
-            pollInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}`);
-                    if (response.ok) {
-                        const roomData = await response.json();
-                        // Обновляем данные если комната изменилась
-                        if (roomData.status === 'deleted') {
-                            clearInterval(pollInterval);
-                            alert('Комната была удалена');
-                            window.location.href = 'rooms.html';
-                        }
-                    } else if (response.status === 404) {
-                        // Комната удалена
-                        clearInterval(pollInterval);
-                        alert('Комната была удалена');
-                        window.location.href = 'rooms.html';
-                    }
-                } catch (error) {
-                    console.error('Ошибка опроса комнаты:', error);
-                }
-            }, 5000); // Опрос каждые 5 секунд
-        }
-        
-        // Показать сообщение об ошибке
         function showError(message) {
             document.getElementById('loading-message').style.display = 'none';
             document.getElementById('error-message').textContent = message;
             document.getElementById('error-message').style.display = 'block';
         }
         
-        // Вспомогательные функции
         function getStatusText(status) {
             switch(status) {
                 case 'open': return 'Открыта';
@@ -826,24 +891,14 @@ function displayParticipants(participants) {
             }
         }
         
-        function getDifficultyText(difficulty) {
-            switch(difficulty) {
-                case 'easy': return 'Легкая';
-                case 'medium': return 'Средняя';
-                case 'hard': return 'Сложная';
-                default: return 'Средняя';
-            }
-        }
-        
-        // Очистка при закрытии страницы
-        window.addEventListener('beforeunload', leaveRoom);
-
         function showErrorInParticipantsList(message) {
             const participantsList = document.getElementById('participants-list');
             if (participantsList) {
                 participantsList.innerHTML = `<div class="error-message" style="margin-top: 10px;">${message}</div>`;
             }
         }
+        
+        window.addEventListener('beforeunload', leaveRoom);
     </script>
 </body>
 </html>

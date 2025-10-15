@@ -194,7 +194,7 @@ class RoomRepository:
                 room = session.get(Room, room_id)
                 if not room.password:
                     return False
-                if not bcrypt.checkpw(room_password.encode('utf-8'), str(room.password).encode('utf-8')):
+                if not bcrypt.checkpw(room_password.encode('utf-8'), room.password.encode('utf-8')):
                     raise ValueError("Wrong password")
                 return True
         except SQLAlchemyError as e:
@@ -239,8 +239,18 @@ class RoomRepository:
                 room = session.get(Room, room_id)
                 if not room:
                     raise ValueError(f"Room {room_id} not found")
-                # Возвращаем User, а не RoomParticipant
-                return [rp.user for rp in room.participants_assoc]
+                stmt = select(RoomParticipant).where(RoomParticipant.room_id == room_id)
+                rp = session.scalars(stmt)
+                users = []
+                for userrp in rp:
+                    user = session.scalar(select(User).where(User.id == userrp.user_id))
+                    userresponse = {
+                        'id': str(user.id),
+                        'username': user.username,
+                        'is_ready': userrp.is_ready,
+                    }
+                    users.append(userresponse)
+                return users
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error of get participants of room {room_id}: {e}')
 
@@ -251,3 +261,15 @@ class RoomRepository:
                 return session.scalar(stmt)  # ✅ Возвращает фактический ID
         except SQLAlchemyError as e:
             raise RuntimeError(f'Error fetching room by name {name}: {e}')
+        
+    def changeReady(self, room_id: int, user_id: int):
+        try:
+            with Session(self.engine) as session:
+                res = select(RoomParticipant).where(RoomParticipant.room_id == room_id and RoomParticipant.user_id == user_id)
+                rp = session.scalar(res)
+                rp.is_ready = not rp.is_ready
+                session.commit()
+                session.refresh(rp)
+        except SQLAlchemyError as e:
+            RuntimeError(f'Error of change read user {user_id} in room {room_id}: {e}')
+                                

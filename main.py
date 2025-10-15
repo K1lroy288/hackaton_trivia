@@ -20,10 +20,12 @@ templates = Jinja2Templates(directory="templates")
 # Подключаем роутеры ПОСЛЕ middleware
 from controller.auth_controller import router as auth_router
 from controller.room_controller import router as room_router
-
+from controller.question_controller import router as quiz_router
 # Подключаем роуты
 app.include_router(auth_router)
 app.include_router(room_router)
+app.include_router(quiz_router)
+
 
 # Главная страница (рендерит templates/index.html)
 @app.get("/")
@@ -37,6 +39,10 @@ async def index(request: Request):
 @app.get("/room.html")
 async def index(request: Request):
     return templates.TemplateResponse("room.html", {"request": request})
+
+@app.get("/quiz.html")
+async def index(request: Request):
+    return templates.TemplateResponse("quiz.html", {"request": request})
 
 # Глобальный обработчик ошибок (опционально, но полезно)
 @app.exception_handler(Exception)

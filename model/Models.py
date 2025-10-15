@@ -113,7 +113,7 @@ class Question(Base):
             'id': self.id,
             'question': self.question,
             'correct_answer': self.correct_answer,
-            'options': [self.correct_answer] + json.loads(self.incorrect_answers),
+            'incorrect_answers': [self.correct_answer] + json.loads(self.incorrect_answers),
             'category': self.category,
             'difficulty': self.difficulty,
         }

@@ -3,6 +3,7 @@ from repository.UserRepository import UserRepository
 from model.Models import Room
 from webSocketManager import manager
 from service.QuestionService import QuestionService
+import bcrypt
 
 
 class RoomService:
@@ -51,6 +52,11 @@ class RoomService:
     def create_room(self, room: Room):
         try:
             print(f"Creating room: {room.name}")  # Логирование
+            if room.password != None:
+                password_bytes = room.password.encode('utf-8')
+                salt = bcrypt.gensalt()
+                hashed_password = bcrypt.hashpw(password_bytes, salt)
+                room.password = hashed_password.decode('utf-8')
             new_room = self.room_repository.createRoom(room)
             print(f"Room created with ID: {new_room.id}")  # Логирование
             return new_room
@@ -78,5 +84,8 @@ class RoomService:
         self.room_repository.deleteRoom(room_id)
 
     def getCountParticipants(self, room_id: int):
-        users_id = self.room_repository.getParticipants(room_id)
-        return [user.to_dict() for user in users_id]
+        users = self.room_repository.getParticipants(room_id)
+        return users
+    
+    def changeready(self, room_id: int, user_id: int):
+        self.room_repository.changeReady(room_id, user_id)

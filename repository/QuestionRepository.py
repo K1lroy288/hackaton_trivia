@@ -48,8 +48,9 @@ class QuestionRepository:
     def findRandom(self):
         try:
             with Session(self.engine) as session:
-                stmt = select(Question).order_by(func.random()).limit(1)
-                return session.scalar(stmt)
+                stmt = session.query(Question).order_by(func.random()).first()
+                print(stmt.to_dict())
+                return stmt
         except SQLAlchemyError as e:
             raise RuntimeError(f'Failed to fetch random question: {e}')
     

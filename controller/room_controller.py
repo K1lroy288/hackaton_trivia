@@ -75,6 +75,9 @@ def controller_create_room(data: RoomCreateRequest):
     try:
         print(f"API: Creating room '{data.name}' for user {data.user_id}")
 
+        if data.password == "":
+            data.password = None
+        
         # ВАЖНО: Проверим существование пользователя перед созданием комнаты
         user = room_service.user_repository.findById(data.user_id)
         if not user:
@@ -159,6 +162,15 @@ def controller_get_count_participants(room_id: int):
     try:
         users = room_service.getCountParticipants(room_id)
         return users
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.patch('/api/v1/room/{room_id}/{user_id}/ready')
+def changeReady(room_id: int, user_id: int):
+    try:
+        room_service.changeready(room_id, user_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
