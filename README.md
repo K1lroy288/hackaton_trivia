@@ -4,7 +4,42 @@
 
 ```bash
 # Установите зависимости
-pip install fastapi uvicorn sqlalchemy bcrypt python-dotenv
+Создайте файл `requirements.txt` с содержимым:
+# FastAPI и веб-сервер
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# База данных и ORM
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# Аутентификация и безопасность
+bcrypt==4.1.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# HTTP запросы и клиенты
+requests==2.31.0
+httpx==0.25.2
+
+# Работа с данными и валидация
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Конфигурация и переменные окружения
+python-dotenv==1.0.0
+
+# Шаблонизатор
+jinja2==3.1.2
+
+# Утилиты и дополнительные библиотеки
+python-multipart==0.0.6
+websockets==12.0
+aiofiles==23.2.1
+
+# Установите зависимости:
+pip install -r requirements.txt
 
 # Запустите приложение
 python main.py
