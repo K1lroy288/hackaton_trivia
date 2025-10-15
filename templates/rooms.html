@@ -336,7 +336,8 @@
 
     <script>
         // Базовый URL для API
-        const API_BASE_URL = 'http://localhost:3425'; // Замените на ваш реальный URL
+        const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3425`;
+
         
         // Проверяем авторизацию при загрузке страницы
         window.addEventListener('DOMContentLoaded', function() {
@@ -522,18 +523,49 @@
         }
 
         // Обработка кликов по комнатам
-        document.getElementById('room-list').addEventListener('click', function(e) {
+        document.getElementById('room-list').addEventListener('click', async function(e) {
             const roomCard = e.target.closest('.room-card');
             if (roomCard) {
-                currentRoomId = roomCard.getAttribute('data-room-id');
-                const roomTitleElement = roomCard.querySelector('.room-title');
-                currentRoomTitle = roomTitleElement.textContent.trim();
-                
-                // Определяем, защищена ли комната паролем по классу статуса
-                const statusElement = roomCard.querySelector('.room-status');
-                currentRoomHasPassword = statusElement.classList.contains('status-closed');
-                
-                joinRoom(currentRoomId, currentRoomTitle, currentRoomHasPassword);
+                const roomId = roomCard.getAttribute('data-room-id');
+                const roomTitle = roomCard.querySelector('.room-title').textContent.trim();
+                const hasPassword = roomCard.querySelector('.room-status').classList.contains('status-closed');
+
+                const userId = localStorage.getItem('currentUserId');
+                if (!userId) {
+                    alert('Ошибка: ID пользователя не найден');
+                    return;
+                }
+
+                if (hasPassword) {
+                    // Показать модалку для пароля
+                    currentRoomId = roomId;
+                    currentRoomTitle = roomTitle;
+                    document.getElementById('room-name').textContent = roomTitle;
+                    document.getElementById('password-modal').style.display = 'flex';
+                    document.getElementById('password-input').focus();
+                } else {
+                    // Без пароля — сразу отправить запрос на /join
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/api/v1/room/${roomId}/join`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                userid: parseInt(userId),
+                                room_password: "" // или null
+                            })
+                        });
+
+                        if (response.ok) {
+                            window.location.href = `room.html?id=${roomId}`;
+                        } else {
+                            const error = await response.json().catch(() => ({}));
+                            alert('Не удалось подключиться к комнате: ' + (error.detail || 'Ошибка сервера'));
+                        }
+                    } catch (err) {
+                        console.error('Ошибка подключения:', err);
+                        alert('Ошибка подключения к комнате');
+                    }
+                }
             }
         });
 
@@ -548,61 +580,59 @@
                 // Комната без пароля, просто переходим
                 window.location.href = `room.html?id=${roomId}`;
             }
+
+            
         }
 
         // Обработчики для модального окна пароля
         document.getElementById('connect-btn').addEventListener('click', async function() {
-            const password = document.getElementById('password-input').value;
-            const userId = localStorage.getItem('currentUserId');
-            
-            if (password === '') {
-                alert('Пожалуйста, введите пароль!');
-                return;
-            }
+        const password = document.getElementById('password-input').value;
+        const userId = localStorage.getItem('currentUserId');
+        
+        if (!password.trim()) {
+            alert('Пожалуйста, введите пароль!');
+            return;
+        }
 
-            if (!userId) {
-                alert('Ошибка: ID пользователя не найден');
-                return;
+        if (!userId || !currentRoomId) {
+            alert('Ошибка: недостаточно данных');
+            return;
+        }
+        
+        try {
+            const connectBtn = document.getElementById('connect-btn');
+            connectBtn.disabled = true;
+            connectBtn.textContent = 'Подключение...';
+            
+            const response = await fetch(`${API_BASE_URL}/api/v1/room/${currentRoomId}/join`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userid: parseInt(userId),
+                    room_password: password
+                })
+            });
+            
+            if (response.ok) {
+                window.location.href = `room.html?id=${currentRoomId}`;
+            } else {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.detail || 'Неверный пароль или ошибка входа');
             }
             
-            try {
-                const connectBtn = document.getElementById('connect-btn');
-                connectBtn.disabled = true;
-                connectBtn.textContent = 'Подключение...';
-                
-                // API вызов для проверки пароля и входа в комнату
-                const response = await fetch(`${API_BASE_URL}/api/v1/room/${currentRoomId}/join`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userid: parseInt(userId),
-                        room_password: password
-                    })
-                });
-                
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        throw new Error('Комната не найдена');
-                    }
-                    throw new Error('Неверный пароль или ошибка входа');
-                }
-                
-                // Пароль верный, переходим в комнату
-                window.location.href = `room.html?id=${currentRoomId}`;
-                
-            } catch (error) {
-                console.error('Ошибка при входе в комнату:', error);
-                alert('Ошибка: ' + error.message);
-                document.getElementById('password-input').value = '';
-                document.getElementById('password-input').focus();
-            } finally {
-                const connectBtn = document.getElementById('connect-btn');
-                connectBtn.disabled = false;
-                connectBtn.textContent = 'Подключиться';
-            }
-        });
+        } catch (error) {
+            console.error('Ошибка при входе в комнату:', error);
+            alert('Ошибка: ' + error.message);
+            document.getElementById('password-input').value = '';
+            document.getElementById('password-input').focus();
+        } finally {
+            const connectBtn = document.getElementById('connect-btn');
+            connectBtn.disabled = false;
+            connectBtn.textContent = 'Подключиться';
+        }
+    });
 
         document.getElementById('cancel-btn').addEventListener('click', function() {
             document.getElementById('password-modal').style.display = 'none';

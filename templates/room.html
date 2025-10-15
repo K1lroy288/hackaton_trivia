@@ -485,7 +485,7 @@
 
     <script>
         // API адрес
-        const API_BASE_URL = 'http://localhost:3425'; // Замените на ваш адрес
+        const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3425`;
         
         // Получаем параметры из URL
         const urlParams = new URLSearchParams(window.location.search);

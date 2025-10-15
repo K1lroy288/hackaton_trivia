@@ -59,7 +59,9 @@ def controller_change_running(room_id: int):
 @router.patch("/api/v1/room/{room_id}/join")
 def controller_add_participant(data: JoinRequest, room_id: int = Path(..., gt=0)):
     try:
-        return room_service.verify_room_password(room_id, data.userid, data.room_password)
+        if data.room_password == "":
+            data.room_password = None
+        room_service.add_participant(room_id, data.userid, data.room_password, False)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except RuntimeError as e:
